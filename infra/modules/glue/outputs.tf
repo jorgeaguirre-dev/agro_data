@@ -1,3 +1,7 @@
+output "database_name" {
+  value = aws_glue_catalog_database.db.name
+}
+
 output "job_names" {
   value = {
     rinde_lotes  = aws_glue_job.process_rinde_lotes.name

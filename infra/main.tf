@@ -64,3 +64,7 @@ output "scripts_bucket" {
 output "glue_jobs" {
   value = module.glue.job_names
 }
+
+output "glue_database" {
+  value = module.glue.database_name
+}
