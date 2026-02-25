@@ -19,12 +19,13 @@ htmlcov/
 dmypy.json
 
 # Terraform
+*.tfstate.backup
 *.tfstate
-.tfstate.
 .terraform/
 *.tfvars
 *.tfplan
 crash.log
+*.terraform.lock.hcl
 
 # IDEs
 .vscode/
