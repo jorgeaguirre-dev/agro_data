@@ -1,3 +1,8 @@
+# Glue Catalog Database
+resource "aws_glue_catalog_database" "db" {
+  name = "${var.project_name}_${var.environment}_db"
+}
+
 # Job para procesar rinde de lotes
 resource "aws_glue_job" "process_rinde_lotes" {
   name     = "${var.project_name}-${var.environment}-process-rinde-lotes"
