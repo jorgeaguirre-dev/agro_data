@@ -24,38 +24,22 @@
           "--output_path": "s3://${CURATED_BUCKET}/clima_diario"
         }
       },
-      "Next": "EjecutarCrawlers"
+      "Next": "IniciarCrawlerRinde"
     },
-    "EjecutarCrawlers": {
-      "Type": "Parallel",
-      "Branches": [
-        {
-          "StartAt": "CrawlerRinde",
-          "States": {
-            "CrawlerRinde": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::glue:startCrawler.sync",
-              "Parameters": {
-                "CrawlerName": "agro-rinde-crawler"
-              },
-              "End": true
-            }
-          }
-        },
-        {
-          "StartAt": "CrawlerClima",
-          "States": {
-            "CrawlerClima": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::glue:startCrawler.sync",
-              "Parameters": {
-                "CrawlerName": "agro-clima-crawler"
-              },
-              "End": true
-            }
-          }
-        }
-      ],
+    "IniciarCrawlerRinde": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
+      "Parameters": {
+        "Name": "agro-rinde-crawler"
+      },
+      "Next": "IniciarCrawlerClima"
+    },
+    "IniciarCrawlerClima": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
+      "Parameters": {
+        "Name": "agro-clima-crawler"
+      },
       "End": true
     }
   }

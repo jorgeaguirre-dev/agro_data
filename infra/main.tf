@@ -48,6 +48,21 @@ module "glue" {
   depends_on = [module.iam, module.s3]
 }
 
+
+# Step Function
+resource "aws_sfn_state_machine" "pipeline" {
+  name     = "${var.project_name}-${var.environment}-pipeline"
+  role_arn = module.iam.step_functions_role_arn
+
+  definition = templatefile("${path.module}/../orchestration/step_functions/pipeline_definition.asl.json", {
+    GLUE_JOB_RINDE  = module.glue.job_names.rinde_lotes
+    GLUE_JOB_CLIMA  = module.glue.job_names.clima_diario
+    LANDING_BUCKET  = module.s3.landing_bucket_id
+    CURATED_BUCKET  = module.s3.curated_bucket_id
+  })
+}
+
+
 # Outputs
 output "landing_bucket" {
   value = module.s3.landing_bucket_id
@@ -67,4 +82,8 @@ output "glue_jobs" {
 
 output "glue_database" {
   value = module.glue.database_name
+}
+
+output "step_function_arn" {
+  value = aws_sfn_state_machine.pipeline.arn
 }
