@@ -1,5 +1,5 @@
 {
-  "Comment": "Pipeline de datos agrícolas",
+  "Comment": "Pipeline de datos agrícolas con Data Quality",
   "StartAt": "ProcesarRinde",
   "States": {
     "ProcesarRinde": {
@@ -24,21 +24,65 @@
           "--output_path": "s3://${CURATED_BUCKET}/clima_diario"
         }
       },
-      "Next": "IniciarCrawlerRinde"
+      "Next": "Crawlers"
     },
-    "IniciarCrawlerRinde": {
+    "Crawlers": {
+      "Type": "Parallel",
+      "Branches": [
+        {
+          "StartAt": "CrawlerRinde",
+          "States": {
+            "CrawlerRinde": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
+              "Parameters": {
+                "Name": "agro-rinde-crawler"
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "CrawlerClima",
+          "States": {
+            "CrawlerClima": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
+              "Parameters": {
+                "Name": "agro-clima-crawler"
+              },
+              "End": true
+            }
+          }
+        }
+      ],
+      "Next": "DataQualityRinde"
+    },
+    "DataQualityRinde": {
       "Type": "Task",
-      "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
       "Parameters": {
-        "Name": "agro-rinde-crawler"
+        "JobName": "${GLUE_JOB_DQ}",
+        "Arguments": {
+          "--suite_name": "rinde_suite",
+          "--database_name": "${DATABASE_NAME}",
+          "--table_name": "rinde_lotes",
+          "--results_bucket": "${CURATED_BUCKET}"
+        }
       },
-      "Next": "IniciarCrawlerClima"
+      "Next": "DataQualityClima"
     },
-    "IniciarCrawlerClima": {
+    "DataQualityClima": {
       "Type": "Task",
-      "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
       "Parameters": {
-        "Name": "agro-clima-crawler"
+        "JobName": "${GLUE_JOB_DQ}",
+        "Arguments": {
+          "--suite_name": "clima_suite",
+          "--database_name": "${DATABASE_NAME}",
+          "--table_name": "clima_diario",
+          "--results_bucket": "${CURATED_BUCKET}"
+        }
       },
       "End": true
     }

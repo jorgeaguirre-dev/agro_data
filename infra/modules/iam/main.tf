@@ -83,3 +83,46 @@ resource "aws_iam_role" "step_functions_role" {
     ]
   })
 }
+
+# Política para Step Functions (MEJORADA)
+resource "aws_iam_policy" "step_functions_policy" {
+  name        = "${var.project_name}-${var.environment}-stepfunctions-policy"
+  description = "Permisos para Step Functions ejecutar jobs y crawlers de Glue"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "glue:StartJobRun",
+          "glue:GetJobRun",
+          "glue:GetJobRuns",
+          "glue:StartCrawler",
+          "glue:GetCrawler",
+          "glue:GetCrawlerMetrics"
+        ],
+        Resource = [
+          "arn:aws:glue:${var.aws_region}:${var.account_id}:job/${var.project_name}-${var.environment}-process-rinde-lotes",
+          "arn:aws:glue:${var.aws_region}:${var.account_id}:job/${var.project_name}-${var.environment}-process-clima-diario",
+          "arn:aws:glue:${var.aws_region}:${var.account_id}:crawler/agro-rinde-crawler",
+          "arn:aws:glue:${var.aws_region}:${var.account_id}:crawler/agro-clima-crawler"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "step_functions_policy_attach" {
+  role       = aws_iam_role.step_functions_role.name
+  policy_arn = aws_iam_policy.step_functions_policy.arn
+}

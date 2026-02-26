@@ -14,6 +14,11 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "account_id" {
+  description = "ID de la cuenta AWS"
+  type        = string
+}
+
 variable "glue_job_names" {
   description = "Nombres de los jobs de Glue"
   type        = map(string)

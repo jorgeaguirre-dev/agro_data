@@ -29,6 +29,8 @@ module "iam" {
   
   environment          = var.environment
   project_name         = var.project_name
+  aws_region          = var.aws_region
+  account_id           = data.aws_caller_identity.current.account_id
   landing_bucket_arn   = module.s3.landing_bucket_arn
   curated_bucket_arn   = module.s3.curated_bucket_arn
   scripts_bucket_arn   = module.s3.scripts_bucket_arn
