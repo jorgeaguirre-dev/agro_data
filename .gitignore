@@ -44,3 +44,4 @@ Thumbs.db
 *.parquet
 .csv
 !tests/fixtures/data/.csv
+draft/
