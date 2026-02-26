@@ -1,0 +1,62 @@
+{
+  "Comment": "Pipeline de datos agrícolas",
+  "StartAt": "ProcesarRinde",
+  "States": {
+    "ProcesarRinde": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "${GLUE_JOB_RINDE}",
+        "Arguments": {
+          "--input_path": "s3://${LANDING_BUCKET}/rinde_lotes.csv",
+          "--output_path": "s3://${CURATED_BUCKET}/rinde_lotes"
+        }
+      },
+      "Next": "ProcesarClima"
+    },
+    "ProcesarClima": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "${GLUE_JOB_CLIMA}",
+        "Arguments": {
+          "--input_path": "s3://${LANDING_BUCKET}/clima_diario.csv",
+          "--output_path": "s3://${CURATED_BUCKET}/clima_diario"
+        }
+      },
+      "Next": "EjecutarCrawlers"
+    },
+    "EjecutarCrawlers": {
+      "Type": "Parallel",
+      "Branches": [
+        {
+          "StartAt": "CrawlerRinde",
+          "States": {
+            "CrawlerRinde": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startCrawler.sync",
+              "Parameters": {
+                "CrawlerName": "agro-rinde-crawler"
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "CrawlerClima",
+          "States": {
+            "CrawlerClima": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startCrawler.sync",
+              "Parameters": {
+                "CrawlerName": "agro-clima-crawler"
+              },
+              "End": true
+            }
+          }
+        }
+      ],
+      "End": true
+    }
+  }
+}
