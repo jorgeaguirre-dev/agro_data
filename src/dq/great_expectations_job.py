@@ -21,7 +21,7 @@ try:
     print(f"🔍 Ejecutando validaciones para {args['table_name']}")
     
     # Leer tabla desde Glue Catalog
-    df = spark.sql(f"SELECT * FROM {args['database_name']}.{args['table_name']}")
+    df = spark.sql(f"SELECT * FROM `{args['database_name']}`.`{args['table_name']}`")
     total_rows = df.count()
     print(f"📊 Registros a validar: {total_rows}")
     
