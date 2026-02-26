@@ -136,3 +136,43 @@ JOIN agro_data_pipeline_dev_db.clima_diario c
 WHERE r.rinde > 5000
 LIMIT 10;
 ```
+
+Idempotencia en los jobs de Glue:
+Los jobs ya son idempotentes porque:
+
+Sobrescriben particiones con mode("overwrite")
+
+Procesan archivo por archivo con timestamp en nombre
+
+Si el mismo archivo se procesa dos veces → mismo resultado
+
+## 🔐 Modelo de Seguridad (3 perfiles)
+
+| Perfil | Responsabilidad | Permisos |
+|--------|-----------------|----------|
+| **Infra Creator** | Terraform, CI/CD | Full acceso a servicios |
+| **Data Ingestor** | Subir CSVs a landing | S3 (landing bucket) |
+| **BI User** | Consultas en Athena | Athena + Glue Catalog + S3 (lectura) |
+
+## ⏰ Pipeline Automático
+
+El pipeline se ejecuta automáticamente:
+- **Schedule**: Todos los días a las 8 AM (CloudWatch Events)
+- **Trigger manual**: Step Functions console o AWS CLI
+- **Idempotente**: Los jobs sobrescriben particiones
+
+## ✅ Data Quality
+
+Great Expectations valida:
+- No nulos en columnas críticas
+- Rangos de rinde (0-20000)
+- Rangos climáticos (temp -20/50, precip 0-500)
+- Formato de fechas YYYY-MM-DD
+
+Los resultados se guardan en S3 (`s3://.../dq_results/`)
+
+## 📊 BI y Visualización
+
+- **Athena**: Consultas SQL directas
+- **QuickSight**: Dashboards interactivos
+- **Conexión JDBC**: Tableau, PowerBI, etc.

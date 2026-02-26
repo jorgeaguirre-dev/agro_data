@@ -25,7 +25,8 @@ dmypy.json
 *.tfvars
 *.tfplan
 crash.log
-*.terraform.lock.hcl
+.terraform.lock.hcl
+.terraform.tfstate.lock.info
 
 # IDEs
 .vscode/

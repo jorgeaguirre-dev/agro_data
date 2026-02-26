@@ -1,13 +1,18 @@
 #!/bin/bash
 
-# Obtener nombre del bucket desde Terraform
-cd infra
-SCRIPTS_BUCKET=$(terraform output -raw scripts_bucket)
-cd ..
+# Cargar outputs
+source "$(dirname "$0")/get_outputs.sh"
 
 echo "📤 Subiendo scripts a s3://${SCRIPTS_BUCKET}/"
 
-# Crear estructura en S3 y subir archivos
-aws s3 cp src/ingestion/jobs/ s3://${SCRIPTS_BUCKET}/jobs/ --recursive
+# Subir jobs principales
+echo "  - Jobs principales..."
+aws s3 cp src/ingestion/jobs/ s3://${SCRIPTS_BUCKET}/jobs/ --recursive --exclude "*" --include "*.py"
 
-echo "✅ Scripts subidos correctamente"
+# Subir jobs de Data Quality
+echo "  - Jobs de Data Quality..."
+aws s3 cp src/dq/ s3://${SCRIPTS_BUCKET}/jobs/ --recursive --exclude "*" --include "*.py"
+
+# Verificar
+echo "✅ Scripts en S3:"
+aws s3 ls s3://${SCRIPTS_BUCKET}/jobs/ --recursive | grep "\.py" | tail -5

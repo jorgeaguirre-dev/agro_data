@@ -59,8 +59,10 @@ resource "aws_sfn_state_machine" "pipeline" {
   definition = templatefile("${path.module}/../orchestration/step_functions/pipeline_definition.asl.json", {
     GLUE_JOB_RINDE  = module.glue.job_names.rinde_lotes
     GLUE_JOB_CLIMA  = module.glue.job_names.clima_diario
+    GLUE_JOB_DQ     = module.glue.job_names.dq
     LANDING_BUCKET  = module.s3.landing_bucket_id
     CURATED_BUCKET  = module.s3.curated_bucket_id
+    DATABASE_NAME   = module.glue.database_name
   })
 }
 

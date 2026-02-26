@@ -84,7 +84,7 @@ resource "aws_iam_role" "step_functions_role" {
   })
 }
 
-# Política para Step Functions (MEJORADA)
+# Política para Step Functions
 resource "aws_iam_policy" "step_functions_policy" {
   name        = "${var.project_name}-${var.environment}-stepfunctions-policy"
   description = "Permisos para Step Functions ejecutar jobs y crawlers de Glue"
@@ -105,6 +105,7 @@ resource "aws_iam_policy" "step_functions_policy" {
         Resource = [
           "arn:aws:glue:${var.aws_region}:${var.account_id}:job/${var.project_name}-${var.environment}-process-rinde-lotes",
           "arn:aws:glue:${var.aws_region}:${var.account_id}:job/${var.project_name}-${var.environment}-process-clima-diario",
+          "arn:aws:glue:${var.aws_region}:${var.account_id}:job/${var.project_name}-${var.environment}-dq-job",
           "arn:aws:glue:${var.aws_region}:${var.account_id}:crawler/agro-rinde-crawler",
           "arn:aws:glue:${var.aws_region}:${var.account_id}:crawler/agro-clima-crawler"
         ]
