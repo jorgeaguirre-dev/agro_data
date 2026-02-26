@@ -1,0 +1,41 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "athena:StartQueryExecution",
+                "athena:GetQueryResults",
+                "athena:GetQueryExecution",
+                "athena:ListQueryExecutions"
+            ],
+            "Resource": "arn:aws:athena:*:*:workgroup/primary"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "glue:GetTable",
+                "glue:GetTables",
+                "glue:GetDatabase",
+                "glue:GetDatabases"
+            ],
+            "Resource": [
+                "arn:aws:glue:*:*:catalog",
+                "arn:aws:glue:*:*:database/agro_data_pipeline_dev_db",
+                "arn:aws:glue:*:*:table/agro_data_pipeline_dev_db/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:ListBucket"
+            ],
+            "Resource": [
+                "arn:aws:s3:::agro-data-pipeline-dev-curated",
+                "arn:aws:s3:::agro-data-pipeline-dev-curated/*",
+                "arn:aws:s3:::agro-data-pipeline-dev-curated/athena-results/*"
+            ]
+        }
+    ]
+}
