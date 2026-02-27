@@ -103,7 +103,7 @@ Para escalar a terabytes y reducir latencia, optimizamos la configuración de Sp
 |Aumentar workers (2 → 5)|	-40% tiempo procesamiento|	+120%
 |Particionado por fecha+hora|	Consultas 3x más rápidas|	+15% (más archivos)
 |Usar Glue Workflows|	Pipeline optimizado|	Sin costo extra
-|Total optimizado|	60% más rápido|	+35% ($15.40/mes|
+|Total optimizado|	60% más rápido|	+35% ($15.40/mes)|
 
 ## 📋 Prerrequisitos
 
