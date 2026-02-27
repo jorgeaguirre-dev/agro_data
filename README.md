@@ -105,7 +105,7 @@ aws athena start-query-execution \
   --output text \
   --query 'QueryExecutionId'
 ```
-
+ 
 ## 🚀 Despliegue rápido
 
 ```bash
