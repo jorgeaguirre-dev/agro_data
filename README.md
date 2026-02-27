@@ -118,6 +118,9 @@ Para escalar a terabytes y reducir latencia, optimizamos la configuración de Sp
 git clone agro_data
 cd agro_data
 
+# Instalar dependencias
+pip install -r requirements-dev.txt
+
 # Desplegar infraestructura
 cd infra && terraform apply
 
