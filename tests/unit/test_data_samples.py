@@ -7,7 +7,7 @@ import os
 import pytest
 
 from src.ingestion.utils.validators import (
-    validate_rinde, validate_temperatura, 
+    validate_rinde, validate_temperatura,
     validate_precipitacion, validate_fecha
 )
 
