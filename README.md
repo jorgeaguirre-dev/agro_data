@@ -10,6 +10,12 @@ Pipeline de datos para procesamiento de información agrícola en AWS.
 
 ## 🏗️ Arquitectura
 
+S3 Landing → Step Functions → Glue Jobs → S3 Curated → Crawlers → Glue Catalog → Athena
+↓
+Data Quality (Great Expectations)
+↓
+Resultados en S3 (dq_results/)
+
 - **Ingesta**: CSV → S3 Landing
 - **Procesamiento**: AWS Glue (PySpark)
 - **Orquestación**: AWS Step Functions
@@ -26,6 +32,73 @@ agro_data/
 │ └── dq/ # Data Quality
 ├── tests/ # Tests
 └── orchestration/ # Step Functions
+
+
+## Componentes implementados
+
+### ✅ Infraestructura (Terraform)
+- Buckets S3: landing, curated, scripts
+- Roles IAM con mínimo privilegio
+- Jobs de Glue (PySpark)
+- Crawlers para actualizar catálogo
+- Step Functions para orquestación
+- Base de datos en Glue Catalog
+
+### ✅ Procesamiento (PySpark)
+- Lectura de CSVs desde landing
+- Validaciones de rango (rinde 0-20000, temp -20-50, precip 0-500)
+- Control de nulos en columnas críticas
+- Escritura en formato Parquet particionado (campaña/lote)
+
+### ✅ Data Quality (Great Expectations)
+- Suite de validaciones para rinde_lotes
+- Suite de validaciones para clima_diario
+- Resultados almacenados en S3 (dq_results/)
+- Reintentos automáticos para sincronización de catálogo
+
+### ✅ Orquestación (Step Functions)
+- Flujo secuencial: Rinde → Clima → Crawlers → DQ Rinde → DQ Clima
+- Manejo de errores y reintentos
+- Ejecución programada (CloudWatch Events)
+
+### ✅ Seguridad (IAM)
+- Perfil administrador (terraform apply)
+- Perfil ingestión (solo escritura a landing)
+- Perfil BI (solo lectura a curated y Athena)
+
+### ✅ Monitoreo
+- Logs en CloudWatch
+- Métricas de ejecución
+- Resultados DQ visibles en S3
+
+## Costos estimados (mensuales)
+- S3 (50GB): $1.15
+- Glue (2 jobs x 10min/día): $3.50  
+- Step Functions (30 ejecuciones): $1.00
+- Athena (10GB escaneados): $0.50
+- **Total: ~$6.15/mes**
+
+## Comandos útiles
+
+```bash
+# Desplegar infraestructura
+cd infra && terraform apply
+
+# Subir scripts
+./scripts/upload_scripts.sh
+
+# Subir datos
+./scripts/upload_data.sh
+
+# Ejecutar pipeline
+./scripts/run_step_function.sh
+
+# Ver resultados DQ
+aws s3 ls s3://agro-data-pipeline-dev-curated/dq_results/ --recursive
+
+# Consultar en Athena
+SELECT * FROM agro-data-pipeline_dev_db.rinde_lotes LIMIT 10;
+```
 
 ## 🚀 Despliegue rápido
 
@@ -47,7 +120,7 @@ cd ..
 aws s3 cp data/rinde_lotes.csv s3://$(cd infra && terraform output -raw landing_bucket)/
 aws s3 cp data/clima_diario.csv s3://$(cd infra && terraform output -raw landing_bucket)/
 
-```bash
+
 # Obtener los valores correctamente
 cd infra
 RINDE_JOB=$(terraform output -json glue_jobs | jq -r '.rinde_lotes')
@@ -96,13 +169,14 @@ aws glue create-crawler --name "agro-clima-crawler" --role arn:aws:iam::... --da
 ```
 
 ## Pipeline automático (después de configurado)
-bash
+```bash
 # Opción 1: Ejecutar Step Function
 aws stepfunctions start-execution \
   --state-machine-arn arn:aws:states:...:pipeline
 
 # Opción 2: Trigger programado (CloudWatch Events)
 # - Se ejecuta automáticamente cada día a las 8 AM
+```
 
 ## Pipeline (Deploy MVP)
 ```bash
@@ -119,7 +193,12 @@ cd ..
 
 # 4. Ejecutar Step Function (AUTOMATIZABLE)
 ./scripts/run_step_function.sh
+```
 
+## DAG
+![Pipeline DAG](./img/DAG.png)
+
+```bash
 # 5. Consultar en Athena (A Demanda)
 # (desde consola o script)
 -- Ejemplo de consulta que podemos realizar
@@ -137,7 +216,7 @@ WHERE r.rinde > 5000
 LIMIT 10;
 ```
 
-Idempotencia en los jobs de Glue:
+## Idempotencia en los jobs de Glue:
 Los jobs ya son idempotentes porque:
 
 Sobrescriben particiones con mode("overwrite")
