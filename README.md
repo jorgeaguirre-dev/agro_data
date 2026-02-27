@@ -97,7 +97,13 @@ cd infra && terraform apply
 aws s3 ls s3://agro-data-pipeline-dev-curated/dq_results/ --recursive
 
 # Consultar en Athena
-SELECT * FROM agro-data-pipeline_dev_db.rinde_lotes LIMIT 10;
+SELECT * FROM 'agro-data-pipeline_dev_db'.'rinde_lotes' LIMIT 10;
+
+aws athena start-query-execution \
+  --query-string "SELECT * FROM 'agro-data-pipeline_dev_db'.'rinde_lotes' LIMIT 10;" \
+  --result-configuration "OutputLocation=s3://agro-data-pipeline-dev-curated/athena-results/" \
+  --output text \
+  --query 'QueryExecutionId'
 ```
 
 ## 🚀 Despliegue rápido
