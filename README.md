@@ -185,3 +185,28 @@ Great Expectations valida:
 - **Athena**: Consultas SQL directas
 
 ![Consulta Athena](img/consultas_athena.png)
+
+## 🧪 Tests
+
+```bash
+$ pytest tests/unit -v
+======================================== test session starts ========================================
+platform linux -- Python 3.11.2, pytest-7.4.0, pluggy-1.6.0
+collected 14 items
+
+tests/unit/test_data_samples.py::test_lectura_rinde_csv ✓                                       [ 7%]
+tests/unit/test_data_samples.py::test_lectura_clima_csv ✓                                       [14%]
+tests/unit/test_data_samples.py::test_filas_invalidas_rinde ✓                                   [21%]
+tests/unit/test_validators.py::TestRindeValidator::test_rinde_valido ✓                          [28%]
+tests/unit/test_validators.py::TestRindeValidator::test_rinde_invalido ✓                        [35%]
+tests/unit/test_validators.py::TestRindeValidator::test_rinde_limites ✓                         [42%]
+tests/unit/test_validators.py::TestTemperaturaValidator::test_temperatura_valida ✓              [50%]
+tests/unit/test_validators.py::TestTemperaturaValidator::test_temperatura_invalida ✓            [57%]
+tests/unit/test_validators.py::TestPrecipitacionValidator::test_precipitacion_valida ✓          [64%]
+tests/unit/test_validators.py::TestPrecipitacionValidator::test_precipitacion_invalida ✓        [71%]
+tests/unit/test_validators.py::TestFechaValidator::test_fecha_valida ✓                          [78%]
+tests/unit/test_validators.py::TestFechaValidator::test_fecha_invalida ✓                        [85%]
+tests/unit/test_validators.py::TestNotNullValidator::test_not_null_valido ✓                     [92%]
+tests/unit/test_validators.py::TestNotNullValidator::test_not_null_invalido ✓                   [100%]
+
+===================================== 14 passed in 0.06s =====================================
