@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # Cargar outputs
-source "$(dirname "$0")/get_outputs.sh"
+cd infra
+export SCRIPTS_BUCKET=$(terraform output -raw scripts_bucket)
+cd ..
 
 echo "📤 Subiendo scripts a s3://${SCRIPTS_BUCKET}/"
 
