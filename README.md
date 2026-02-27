@@ -1,3 +1,14 @@
+![Python](https://img.shields.io/badge/Python-3.9-blue?logo=python&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS-Cloud-orange?logo=amazon-aws&logoColor=white)
+![IaC](https://img.shields.io/badge/IaC-Terraform-purple?logo=terraform&logoColor=white)
+![Glue](https://img.shields.io/badge/Glue-ETL-orange?logo=amazon-aws&logoColor=white)
+![Step Functions](https://img.shields.io/badge/Step%20Functions-Orchestration-orange?logo=amazon-aws&logoColor=white)
+![Athena](https://img.shields.io/badge/Athena-Query%20Service-orange?logo=amazon-aws&logoColor=white)
+![S3](https://img.shields.io/badge/S3-Storage-orange?logo=amazon-s3&logoColor=white)
+![Parquet](https://img.shields.io/badge/Parquet-Columnar-red?logo=apacheparquet&logoColor=white)
+![Spark](https://img.shields.io/badge/Spark-PySpark-red?logo=apachespark&logoColor=white)
+![Great Expectations](https://img.shields.io/badge/Great%20Expectations-Data%20Quality-purple?logo=great-expectations&logoColor=white)
+
 # Agro Data Pipeline
 
 Pipeline de datos para procesamiento de información agrícola en AWS.
