@@ -75,6 +75,25 @@ Es posible monitorear mediante:
 - Athena (10GB escaneados): $0.50
 - **Total: ~usd 11.40/mes**
 
+### ⚡ Optimización 1: Reducción de Costos (Costo-eficiente)
+"Para escenarios de menor volumen (<1GB), podríamos reemplazar Glue Spark por Pandas en AWS Lambda"
+
+|Cambio |	Impacto |	Ahorro |
+|-|-|-|
+|Spark (2 DPU) → Pandas (Lambda 1GB)|	+3s de latencia|	-65%
+|Glue Spark Jobs → Lambda (128MB)|	Procesamiento batch a demanda	|-$5.50/mes
+|Total optimizado| |		~$5.90/mes
+
+### ⚡ Optimización 2: Performance y Escalabilidad (Alto Rendimiento)
+Para escalar a terabytes y reducir latencia, optimizamos la configuración de Spark y el particionado
+
+|Cambio|	Impacto|	Costo adicional|
+|-|-|-|
+|Aumentar workers (2 → 5)|	-40% tiempo procesamiento|	+120%
+|Particionado por fecha+hora|	Consultas 3x más rápidas|	+15% (más archivos)
+|Usar Glue Workflows|	Pipeline optimizado|	Sin costo extra
+|Total optimizado|	60% más rápido|	+35% ($15.40/mes|
+
 ## 📋 Prerrequisitos
 
 - AWS CLI configurado
