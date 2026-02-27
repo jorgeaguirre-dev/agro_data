@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Cargar outputs
-#source "$(dirname "$0")/get_outputs.sh"
+source "$(dirname "$0")/get_outputs.sh"
 
 # Validar que tenemos el ARN
 if [ -z "$STEP_FUNCTION_ARN" ]; then
