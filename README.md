@@ -6,8 +6,11 @@
 ![Athena](https://img.shields.io/badge/Athena-Query%20Service-orange?logo=amazon-aws&logoColor=white)
 ![S3](https://img.shields.io/badge/S3-Storage-orange?logo=amazon-s3&logoColor=white)
 ![Parquet](https://img.shields.io/badge/Parquet-Columnar-red?logo=apacheparquet&logoColor=white)
-![Spark](https://img.shields.io/badge/Spark-PySpark-red?logo=apachespark&logoColor=white)
+![Spark](https://img.shields.io/badge/Spark-PySpark-green?logo=apachespark&logoColor=white)
 ![Great Expectations](https://img.shields.io/badge/Great%20Expectations-Data%20Quality-purple?logo=great-expectations&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-14%20passed-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)
+![CI Pipeline](https://github.com/jorgeaguirre-dev/agro-data/actions/workflows/ci.yml/badge.svg)
 
 # Agro Data Pipeline
 
