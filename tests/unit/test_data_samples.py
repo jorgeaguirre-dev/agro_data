@@ -1,5 +1,5 @@
 """
-Tests con muestras de datos simulando archivos CSV
+Tests with data samples simulating CSV files
 """
 import csv
 import tempfile
@@ -16,7 +16,7 @@ from src.ingestion.utils.validators import (
 
 @pytest.fixture
 def sample_rinde_csv():
-    """Crea un archivo CSV temporal con datos de rinde"""
+    """Creates a temporary CSV file with yield data"""
     content = """lote_id,campana,rinde,fecha_cosecha
 L001,2023,8500,2023-05-15
 L002,2023,12000,2023-05-20
@@ -31,7 +31,7 @@ L005,2023,,2023-05-25
 
 @pytest.fixture
 def sample_clima_csv():
-    """Crea un archivo CSV temporal con datos de clima"""
+    """Creates a temporary CSV file with climate data"""
     content = """lote_id,fecha,temperatura,precipitacion
 L001,2023-05-15,25.5,10.2
 L002,2023-05-20,30.1,0
@@ -45,7 +45,7 @@ L005,2023-05-25,22.0,
 
 
 def test_lectura_rinde_csv(sample_rinde_csv):
-    """Prueba que podemos leer el CSV y validar datos"""
+    """Tests that we can read the CSV and validate data"""
     import csv
 
     with open(sample_rinde_csv, "r") as f:
@@ -54,18 +54,18 @@ def test_lectura_rinde_csv(sample_rinde_csv):
 
     assert len(rows) == 5
 
-    # Validar cada fila
+    # Validate each row
     for row in rows:
-        if row["rinde"]:  # si tiene rinde
+        if row["rinde"]:  # if it has yield
             assert validate_rinde(row["rinde"]) in [True, False]
         assert validate_fecha(row["fecha_cosecha"]) in [True, False]
 
-    # Limpiar
+    # Clean up
     os.unlink(sample_rinde_csv)
 
 
 def test_lectura_clima_csv(sample_clima_csv):
-    """Prueba que podemos leer el CSV de clima y validar datos"""
+    """Tests that we can read the climate CSV and validate data"""
     import csv
 
     with open(sample_clima_csv, "r") as f:
@@ -74,7 +74,7 @@ def test_lectura_clima_csv(sample_clima_csv):
 
     assert len(rows) == 5
 
-    # Validar cada fila
+    # Validate each row
     for row in rows:
         if row["temperatura"]:
             assert validate_temperatura(row["temperatura"]) in [True, False]
@@ -82,23 +82,23 @@ def test_lectura_clima_csv(sample_clima_csv):
             assert validate_precipitacion(row["precipitacion"]) in [True, False]
         assert validate_fecha(row["fecha"]) in [True, False]
 
-    # Limpiar
+    # Clean up
     os.unlink(sample_clima_csv)
 
 
 def test_filas_invalidas_rinde(sample_rinde_csv):
-    """Identifica filas inválidas en el CSV de rinde"""
+    """Identifies invalid rows in the yield CSV"""
     import csv
 
     with open(sample_rinde_csv, "r") as f:
         reader = csv.DictReader(f)
         rows = list(reader)
 
-    # La fila con rinde=25000 debe ser inválida
+    # The row with rinde=25000 should be invalid
     fila_invalida = [r for r in rows if r["rinde"] == "25000"][0]
     assert validate_rinde(fila_invalida["rinde"]) is False
 
-    # La fila sin rinde debe tener rinde inválido
+    # The row without rinde should have invalid yield
     fila_sin_rinde = [r for r in rows if r["rinde"] == ""][0]
     assert validate_rinde(fila_sin_rinde["rinde"]) is False
 

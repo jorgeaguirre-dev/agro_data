@@ -1,19 +1,19 @@
 variable "environment" {
-  description = "Ambiente de despliegue"
+  description = "Deployment environment"
   type        = string
 }
 
 variable "project_name" {
-  description = "Nombre del proyecto"
+  description = "Project name"
   type        = string
 }
 
 variable "glue_role_arn" {
-  description = "ARN del rol IAM para Glue"
+  description = "ARN of the IAM role for Glue"
   type        = string
 }
 
 variable "scripts_bucket_id" {
-  description = "ID del bucket scripts"
+  description = "Scripts bucket ID"
   type        = string
 }

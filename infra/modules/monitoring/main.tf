@@ -1,4 +1,4 @@
-# Dashboard de CloudWatch
+# CloudWatch Dashboard
 resource "aws_cloudwatch_dashboard" "pipeline_dashboard" {
   dashboard_name = "${var.project_name}-${var.environment}-dashboard"
 
@@ -15,7 +15,7 @@ resource "aws_cloudwatch_dashboard" "pipeline_dashboard" {
           period = 300
           stat   = "Average"
           region = var.aws_region
-          title  = "Métricas de Glue Jobs"
+          title  = "Glue Jobs Metrics"
         }
       },
       {
@@ -30,14 +30,14 @@ resource "aws_cloudwatch_dashboard" "pipeline_dashboard" {
           period = 300
           stat   = "Sum"
           region = var.aws_region
-          title  = "Métricas de Step Functions"
+          title  = "Step Functions Metrics"
         }
       }
     ]
   })
 }
 
-# Alarma para fallos en Glue Jobs
+# Alarm for Glue Job failures
 resource "aws_cloudwatch_metric_alarm" "glue_job_failures" {
   for_each = var.glue_job_names
 
@@ -49,7 +49,7 @@ resource "aws_cloudwatch_metric_alarm" "glue_job_failures" {
   period             = 300
   statistic          = "Sum"
   threshold          = 0
-  alarm_description  = "Alarma por fallo en job de Glue: ${each.value}"
+  alarm_description  = "Alarm for Glue job failure: ${each.value}"
   alarm_actions      = [var.alarm_sns_topic_arn]
 
   dimensions = {
@@ -64,7 +64,7 @@ resource "aws_cloudwatch_metric_alarm" "glue_job_failures" {
   }
 }
 
-# Alarma para alta tasa de nulos (métrica personalizada)
+# Alarm for high null rate (custom metric)
 resource "aws_cloudwatch_metric_alarm" "high_null_rate" {
   alarm_name          = "${var.project_name}-${var.environment}-high-null-rate"
   comparison_operator = "GreaterThanThreshold"
@@ -73,8 +73,8 @@ resource "aws_cloudwatch_metric_alarm" "high_null_rate" {
   namespace          = "Bayer/DataQuality"
   period             = 300
   statistic          = "Average"
-  threshold          = 5.0  # 5% de nulos
-  alarm_description  = "Alarma por alta tasa de nulos en los datos"
+  threshold          = 5.0  # 5% null rate
+  alarm_description  = "Alarm for high null rate in data"
   alarm_actions      = [var.alarm_sns_topic_arn]
 
   tags = {
@@ -83,7 +83,7 @@ resource "aws_cloudwatch_metric_alarm" "high_null_rate" {
   }
 }
 
-# Log group para métricas personalizadas
+# Log group for custom metrics
 resource "aws_cloudwatch_log_group" "dq_metrics" {
   name              = "/aws/glue/${var.project_name}-${var.environment}/dq-metrics"
   retention_in_days = 30

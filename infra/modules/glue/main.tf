@@ -3,7 +3,7 @@ resource "aws_glue_catalog_database" "db" {
   name = "${var.project_name}_${var.environment}_db"
 }
 
-# Job para procesar rinde de lotes
+# Job to process plot yield
 resource "aws_glue_job" "process_rinde_lotes" {
   name     = "${var.project_name}-${var.environment}-process-rinde-lotes"
   role_arn = var.glue_role_arn
@@ -26,7 +26,7 @@ resource "aws_glue_job" "process_rinde_lotes" {
   number_of_workers = 2
 }
 
-# Job para procesar clima diario
+# Job to process daily weather
 resource "aws_glue_job" "process_clima_diario" {
   name     = "${var.project_name}-${var.environment}-process-clima-diario"
   role_arn = var.glue_role_arn
@@ -49,7 +49,7 @@ resource "aws_glue_job" "process_clima_diario" {
   number_of_workers = 2
 }
 
-# Job para Data Quality (Great Expectations)
+# Job for Data Quality (Great Expectations)
 resource "aws_glue_job" "great_expectations" {
   name     = "${var.project_name}-${var.environment}-dq-job"
   role_arn = var.glue_role_arn

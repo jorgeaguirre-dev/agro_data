@@ -1,11 +1,11 @@
 """
-Tests unitarios para funciones de validación
+Unit tests for validation functions
 """
 import sys
 import os
 import pytest
 
-# Agregar src al path para poder importar
+# Add src to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../src"))
 
 from src.ingestion.utils.validators import (
@@ -18,7 +18,7 @@ from src.ingestion.utils.validators import (
 
 
 class TestRindeValidator:
-    """Tests para validación de rinde"""
+    """Tests for yield validation"""
 
     def test_rinde_valido(self):
         assert validate_rinde("5000") is True
@@ -41,7 +41,7 @@ class TestRindeValidator:
 
 
 class TestTemperaturaValidator:
-    """Tests para validación de temperatura"""
+    """Tests for temperature validation"""
 
     def test_temperatura_valida(self):
         assert validate_temperatura("25") is True
@@ -57,7 +57,7 @@ class TestTemperaturaValidator:
 
 
 class TestPrecipitacionValidator:
-    """Tests para validación de precipitación"""
+    """Tests for precipitation validation"""
 
     def test_precipitacion_valida(self):
         assert validate_precipitacion("0") is True
@@ -71,7 +71,7 @@ class TestPrecipitacionValidator:
 
 
 class TestFechaValidator:
-    """Tests para validación de fechas"""
+    """Tests for date validation"""
 
     def test_fecha_valida(self):
         assert validate_fecha("2023-05-15") is True
@@ -86,7 +86,7 @@ class TestFechaValidator:
 
 
 class TestNotNullValidator:
-    """Tests para validación de nulos"""
+    """Tests for null validation"""
 
     def test_not_null_valido(self):
         assert validate_not_null("dato") is True

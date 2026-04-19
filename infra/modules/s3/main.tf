@@ -1,4 +1,4 @@
-# Crear buckets (sin tags)
+# Create buckets (no tags)
 resource "aws_s3_bucket" "landing" {
   bucket = "${var.project_name}-${var.environment}-landing"
 }
@@ -11,7 +11,7 @@ resource "aws_s3_bucket" "scripts" {
   bucket = "${var.project_name}-${var.environment}-scripts"
 }
 
-# Bloque único para public access block
+# Single block for public access block
 resource "aws_s3_bucket_public_access_block" "all" {
   for_each = {
     landing  = aws_s3_bucket.landing.id
@@ -27,7 +27,7 @@ resource "aws_s3_bucket_public_access_block" "all" {
   restrict_public_buckets = true
 }
 
-# Bloque único para cifrado
+# Single block for encryption
 resource "aws_s3_bucket_server_side_encryption_configuration" "all" {
   for_each = {
     landing  = aws_s3_bucket.landing.id
@@ -44,7 +44,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "all" {
   }
 }
 
-# Versionado solo para curated (opcional)
+# Versioning only for curated (optional)
 resource "aws_s3_bucket_versioning" "curated" {
   bucket = aws_s3_bucket.curated.id
   versioning_configuration {

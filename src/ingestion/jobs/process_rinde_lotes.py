@@ -1,5 +1,5 @@
 """
-AWS Glue Job para procesar datos de rinde de lotes
+AWS Glue Job to process plot yield data
 """
 import sys
 from pyspark.context import SparkContext
@@ -17,25 +17,25 @@ job = Job(glueContext)
 job.init(args["JOB_NAME"], args)
 
 try:
-    print(f"📥 Leyendo datos desde: {args['input_path']}")
+    print(f"📥 Reading data from: {args['input_path']}")
 
-    # 1. Leer CSV
+    # 1. Read CSV
     df = spark.read.option("header", "true").csv(args["input_path"])
     total_inicial = df.count()
-    print(f"📊 Registros leídos: {total_inicial}")
-    print(f"📋 Columnas: {df.columns}")
+    print(f"📊 Records read: {total_inicial}")
+    print(f"📋 Columns: {df.columns}")
 
-    # 2. Validaciones inline
-    print("🔍 Validando datos...")
+    # 2. Inline validations
+    print("🔍 Validating data...")
 
-    # 2.1 Filtrar rinde fuera de rango (0-20000)
+    # 2.1 Filter yield out of range (0-20000)
     df = df.withColumn("rinde_num", F.col("rinde").cast("double"))
     df = df.filter(F.col("rinde_num").between(0, 20000))
 
-    # 2.2 Eliminar nulos en columnas críticas
+    # 2.2 Drop nulls in critical columns
     df = df.dropna(subset=["lote_id", "campana"])
 
-    # 2.3 Validar formato de fecha (simple)
+    # 2.3 Validate date format (simple)
     df = df.withColumn(
         "fecha_valida",
         F.when(F.col("fecha_cosecha").rlike("^\\d{4}-\\d{2}-\\d{2}$"), True).otherwise(
@@ -44,38 +44,38 @@ try:
     )
     df = df.filter(F.col("fecha_valida"))
 
-    # 3. Transformaciones
-    print("🔄 Aplicando transformaciones...")
+    # 3. Transformations
+    print("🔄 Applying transformations...")
 
-    # 3.1 Estandarizar nombres de columnas
+    # 3.1 Standardize column names
     for col in df.columns:
         df = df.withColumnRenamed(col, col.lower().strip().replace(" ", "_"))
 
-    # 3.2 CREAR columna lote a partir de lote_id (para particionar)
+    # 3.2 CREATE lote column from lote_id (for partitioning)
     df = df.withColumn("lote", F.col("lote_id"))
 
-    # 3.3 Limpiar valores de partición
+    # 3.3 Clean partition values
     df = df.withColumn(
         "campana", F.regexp_replace(F.col("campana"), "[^a-zA-Z0-9]", "_")
     )
     df = df.withColumn("lote", F.regexp_replace(F.col("lote"), "[^a-zA-Z0-9]", "_"))
 
-    # 3.4 Eliminar columnas temporales
+    # 3.4 Drop temporary columns
     df = df.drop("rinde_num", "fecha_valida")
 
     total_final = df.count()
-    print(f"📊 Registros después de validaciones: {total_final}")
+    print(f"📊 Records after validations: {total_final}")
     print(f"   Filtrados: {total_inicial - total_final}")
-    print(f"📋 Columnas finales: {df.columns}")
+    print(f"📋 Final columns: {df.columns}")
 
-    # 4. Escribir como Parquet particionado
-    print(f"📤 Escribiendo a: {args['output_path']}")
-    print("📂 Particionando por: campana, lote")
+    # 4. Write as partitioned Parquet
+    print(f"📤 Writing to: {args['output_path']}")
+    print("📂 Partitioning by: campaign, plot")
     df.write.mode("overwrite").partitionBy("campana", "lote").parquet(
         args["output_path"]
     )
 
-    print("✅ Job completado exitosamente")
+    print("✅ Job completed successfully")
 
 except Exception as e:
     print(f"❌ Error: {str(e)}")

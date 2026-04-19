@@ -1,10 +1,10 @@
 #!/bin/bash
-# Simple: ejecuta la Step Function
+# Simple: runs the Step Function
 
-# Primero carga variables (asume que estás en raíz)
+# Load variables first (assumes you are at root)
 cd infra
 STEP_FUNCTION_ARN=$(terraform output -raw step_function_arn)
 cd ..
 
-echo "🚀 Ejecutando: $STEP_FUNCTION_ARN"
+echo "🚀 Running: $STEP_FUNCTION_ARN"
 aws stepfunctions start-execution --state-machine-arn "$STEP_FUNCTION_ARN"

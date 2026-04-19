@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Script para obtener outputs de Terraform de forma segura
+# Script to get Terraform outputs safely
 cd infra
 
-# Obtener valores
+# Get values
 export RINDE_JOB=$(terraform output -json glue_jobs | jq -r '.rinde_lotes')
 export CLIMA_JOB=$(terraform output -json glue_jobs | jq -r '.clima_diario')
 export DQ_JOB=$(terraform output -json glue_jobs | jq -r '.dq')
@@ -15,7 +15,7 @@ export STEP_FUNCTION_ARN=$(terraform output -raw step_function_arn 2>/dev/null |
 
 cd ..
 
-echo "✅ Outputs cargados:"
+echo "✅ Outputs loaded:"
 echo "  RINDE_JOB: $RINDE_JOB"
 echo "  CLIMA_JOB: $CLIMA_JOB"
 echo "  DQ_JOB: $DQ_JOB"

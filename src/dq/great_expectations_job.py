@@ -1,6 +1,6 @@
 """
-Job de Glue para ejecutar validaciones de Great Expectations
-Con sincronización forzada del catálogo
+Glue Job to run Great Expectations validations
+With forced catalog synchronization
 """
 import sys
 import json
@@ -24,56 +24,56 @@ job.init(args["JOB_NAME"], args)
 
 
 def force_catalog_sync(spark, database, table, max_attempts=10, delay=5):
-    """Fuerza la sincronización del catálogo y reintenta hasta que la tabla esté disponible"""
+    """Forces catalog synchronization and retries until the table is available"""
 
-    print("🔄 Forzando sincronización del catálogo...")
+    print("🔄 Forcing catalog synchronization...")
 
-    # Opción 1: Refrescar la tabla si existe
+    # Option 1: Refresh the table if it exists
     try:
         spark.sql(f"REFRESH TABLE `{database}`.`{table}`")
-        print(f"✅ Tabla {database}.{table} refrescada")
+        print(f"✅ Table {database}.{table} refreshed")
     except Exception:
-        print("⚠️ No se pudo refrescar (la tabla puede no existir aún)")
+        print("⚠️ Could not refresh (table may not exist yet)")
 
-    # Opción 2: Listar tablas disponibles en Spark
+    # Option 2: List available tables in Spark
     for attempt in range(max_attempts):
         try:
             print(
-                f"🔍 Intento {attempt + 1}/{max_attempts} - Verificando tablas en Spark..."
+                f"🔍 Attempt {attempt + 1}/{max_attempts} - Checking tables in Spark..."
             )
 
-            # Listar bases de datos en Spark
+            # List databases in Spark
             spark.sql("SHOW DATABASES").show(truncate=False)
 
-            # Intentar usar la base de datos
+            # Try to use the database
             spark.sql(f"USE `{database}`")
 
-            # Listar tablas en esta base de datos
+            # List tables in this database
             tables_df = spark.sql("SHOW TABLES")
-            print("📋 Tablas disponibles en Spark:")
+            print("📋 Available tables in Spark:")
             tables_df.show(truncate=False)
 
-            # Verificar si nuestra tabla está en la lista
+            # Check if our table is in the list
             tables_list = [row["tableName"] for row in tables_df.collect()]
 
             if table in tables_list:
-                print(f"✅ Tabla {table} encontrada en Spark!")
+                print(f"✅ Table {table} found in Spark!")
 
-                # Intentar contar registros
+                # Try to count records
                 count_df = spark.sql(f"SELECT COUNT(*) FROM `{database}`.`{table}`")
                 count = count_df.collect()[0][0]
-                print(f"📊 Registros encontrados: {count}")
+                print(f"📊 Records found: {count}")
                 return True
             else:
                 print(
-                    f"⏳ Tabla {table} NO encontrada en Spark. Tablas disponibles: {tables_list}"
+                    f"⏳ Table {table} NOT found in Spark. Available tables: {tables_list}"
                 )
 
         except Exception as e:
-            print(f"⏳ Error en intento {attempt + 1}: {str(e)[:100]}")
+            print(f"⏳ Error on attempt {attempt + 1}: {str(e)[:100]}")
 
         if attempt < max_attempts - 1:
-            print(f"   Esperando {delay} segundos...")
+            print(f"   Waiting {delay} seconds...")
             time.sleep(delay)
 
     return False
@@ -81,61 +81,61 @@ def force_catalog_sync(spark, database, table, max_attempts=10, delay=5):
 
 try:
     print("=" * 50)
-    print("🚀 INICIANDO JOB DE DATA QUALITY")
+    print("🚀 STARTING DATA QUALITY JOB")
     print("=" * 50)
-    print("📋 Configuración:")
+    print("📋 Configuration:")
     print(f"   - Database: {args['database_name']}")
     print(f"   - Table: {args['table_name']}")
     print(f"   - Suite: {args['suite_name']}")
     print(f"   - Results bucket: {args['results_bucket']}")
 
-    # Opción 3: Usar Glue Client directamente para debug
+    # Option 3: Use Glue Client directly for debug
     glue_client = boto3.client("glue", region_name="us-east-1")
     try:
         tables_response = glue_client.get_tables(DatabaseName=args["database_name"])
         print(
-            f"📋 Tablas en Glue Catalog: {[t['Name'] for t in tables_response['TableList']]}"
+            f"📋 Tables in Glue Catalog: {[t['Name'] for t in tables_response['TableList']]}"
         )
     except Exception as e:
-        print(f"⚠️ Error obteniendo tablas de Glue: {e}")
+        print(f"⚠️ Error getting tables from Glue: {e}")
 
-    # ESPERAR hasta que la tabla esté disponible en Spark
+    # WAIT until the table is available in Spark
     if not force_catalog_sync(spark, args["database_name"], args["table_name"]):
-        # Último recurso: intentar con la ruta S3 directamente
-        print("⚠️ Intentando acceder por ruta S3 como fallback...")
+        # Last resort: try with the S3 path directly
+        print("⚠️ Trying to access via S3 path as fallback...")
         s3_path = f"s3://{args['results_bucket'].replace('-curated', '')}/{args['table_name']}"
 
-        # Determinar la ruta correcta
+        # Determine the correct path
         if "rinde" in args["table_name"]:
             s3_path = "s3://agro-data-pipeline-dev-curated/rinde_lotes"
         else:
             s3_path = "s3://agro-data-pipeline-dev-curated/clima_diario"
 
-        print(f"📂 Leyendo directamente de: {s3_path}")
+        print(f"📂 Reading directly from: {s3_path}")
 
         try:
             df = spark.read.parquet(s3_path)
             total_rows = df.count()
-            print(f"✅ Lectura directa exitosa! {total_rows} registros")
+            print(f"✅ Direct read successful! {total_rows} records")
 
-            # Crear vista temporal para poder usar SQL
+            # Create temporary view to use SQL
             df.createOrReplaceTempView(args["table_name"])
 
         except Exception as e2:
             raise Exception(
-                f"No se pudo acceder a los datos ni por catalog ni por S3: {e2}"
+                f"Could not access data via catalog or S3: {e2}"
             )
     else:
-        # Leer la tabla normalmente
+        # Read the table normally
         df = spark.sql(
             f"SELECT * FROM `{args['database_name']}`.`{args['table_name']}`"
         )
         total_rows = df.count()
 
-    print(f"📊 Total de registros: {total_rows}")
+    print(f"📊 Total records: {total_rows}")
 
     if total_rows == 0:
-        print("⚠️ Tabla vacía - no se pueden realizar validaciones")
+        print("⚠️ Empty table - validations cannot be performed")
         results = {
             "suite_name": args["suite_name"],
             "table": args["table_name"],
@@ -146,13 +146,13 @@ try:
             "validations": [],
         }
     else:
-        # Mostrar schema y datos
+        # Show schema and data
         print("📋 Schema:")
         df.printSchema()
-        print("📋 Primeras 3 filas:")
+        print("📋 First 3 rows:")
         df.show(3, truncate=False)
 
-        # Validaciones
+        # Validations
         results = {
             "suite_name": args["suite_name"],
             "table": args["table_name"],
@@ -162,11 +162,11 @@ try:
             "validations": [],
         }
 
-        # Columnas disponibles
+        # Available columns
         columns = df.columns
-        print(f"📋 Columnas disponibles: {columns}")
+        print(f"📋 Available columns: {columns}")
 
-        # Validación 1: Sin nulos en lote_id (si existe)
+        # Validation 1: No nulls in lote_id (if exists)
         if "lote_id" in columns:
             null_count = df.filter("`lote_id` IS NULL").count()
             results["validations"].append(
@@ -178,9 +178,9 @@ try:
                     "null_percentage": round(null_count / total_rows * 100, 2),
                 }
             )
-            print(f"   lote_id nulos: {null_count}")
+            print(f"   lote_id nulls: {null_count}")
 
-        # Validaciones específicas por tabla
+        # Table-specific validations
         if "rinde" in args["table_name"]:
             if "rinde" in columns:
                 out_of_range = df.filter(
@@ -194,7 +194,7 @@ try:
                         "out_of_range": out_of_range,
                     }
                 )
-                print(f"   rinde fuera de rango: {out_of_range}")
+                print(f"   rinde out of range: {out_of_range}")
 
             if "campana" in columns:
                 null_campana = df.filter("`campana` IS NULL").count()
@@ -220,7 +220,7 @@ try:
                         "out_of_range": temp_out,
                     }
                 )
-                print(f"   temperatura fuera de rango: {temp_out}")
+                print(f"   temperatura out of range: {temp_out}")
 
             if "precipitacion" in columns:
                 precip_out = df.filter(
@@ -234,9 +234,9 @@ try:
                         "out_of_range": precip_out,
                     }
                 )
-                print(f"   precipitación fuera de rango: {precip_out}")
+                print(f"   precipitacion out of range: {precip_out}")
 
-    # Guardar resultados
+    # Save results
     s3 = boto3.client("s3")
     key = f"dq_results/{args['table_name']}_{args['suite_name']}_{time.strftime('%Y%m%d_%H%M%S')}.json"
 
@@ -246,23 +246,23 @@ try:
         Body=json.dumps(results, indent=2, default=str),
     )
 
-    print(f"📈 Resultados guardados en s3://{args['results_bucket']}/{key}")
+    print(f"📈 Results saved to s3://{args['results_bucket']}/{key}")
 
     if total_rows > 0:
         all_success = all(v.get("success", False) for v in results["validations"])
-        print(f"✅ Validaciones exitosas: {all_success}")
+        print(f"✅ Successful validations: {all_success}")
 
         if not all_success:
-            print("⚠️ Algunas validaciones fallaron - revisar resultados")
+            print("⚠️ Some validations failed - check results")
     else:
-        print("⚠️ Tabla vacía - validaciones no aplicadas")
+        print("⚠️ Empty table - validations not applied")
 
     print("=" * 50)
-    print("✅ JOB COMPLETADO")
+    print("✅ JOB COMPLETED")
     print("=" * 50)
 
 except Exception as e:
-    print(f"❌ Error fatal: {str(e)}")
+    print(f"❌ Fatal error: {str(e)}")
     import traceback
 
     traceback.print_exc()

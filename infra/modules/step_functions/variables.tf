@@ -1,58 +1,58 @@
 variable "environment" {
-  description = "Ambiente de despliegue"
+  description = "Deployment environment"
   type        = string
 }
 
 variable "project_name" {
-  description = "Nombre del proyecto"
+  description = "Project name"
   type        = string
 }
 
 variable "aws_region" {
-  description = "Región de AWS"
+  description = "AWS region"
   type        = string
   default     = "us-east-1"
 }
 
 variable "account_id" {
-  description = "ID de la cuenta AWS"
+  description = "AWS account ID"
   type        = string
 }
 
 variable "landing_bucket_id" {
-  description = "ID del bucket landing"
+  description = "Landing bucket ID"
   type        = string
 }
 
 variable "curated_bucket_id" {
-  description = "ID del bucket curated"
+  description = "Curated bucket ID"
   type        = string
 }
 
 variable "glue_job_names" {
-  description = "Nombres de los jobs de Glue"
+  description = "Glue job names"
   type        = map(string)
 }
 
 variable "step_functions_role_arn" {
-  description = "ARN del rol IAM para Step Functions"
+  description = "ARN of the IAM role for Step Functions"
   type        = string
 }
 
 variable "alerts_email" {
-  description = "Email para alertas"
+  description = "Email for alerts"
   type        = string
   default     = ""
 }
 
 variable "create_schedule" {
-  description = "Crear trigger programado"
+  description = "Create scheduled trigger"
   type        = bool
   default     = true
 }
 
 variable "schedule_expression" {
-  description = "Expresión de schedule para CloudWatch (cron o rate)"
+  description = "Schedule expression for CloudWatch (cron or rate)"
   type        = string
-  default     = "cron(0 8 * * ? *)"  # 8 AM todos los días
+  default     = "cron(0 8 * * ? *)"  # 8 AM every day
 }

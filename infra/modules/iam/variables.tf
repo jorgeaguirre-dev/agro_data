@@ -1,35 +1,35 @@
 variable "environment" {
-  description = "Ambiente de despliegue"
+  description = "Deployment environment"
   type        = string
 }
 
 variable "project_name" {
-  description = "Nombre del proyecto"
+  description = "Project name"
   type        = string
 }
 
 variable "aws_region" {
-  description = "Región de AWS"
+  description = "AWS region"
   type        = string
   default     = "us-east-1"
 }
 
 variable "account_id" {
-  description = "ID de la cuenta AWS"
+  description = "AWS account ID"
   type        = string
 }
 
 variable "landing_bucket_arn" {
-  description = "ARN del bucket landing"
+  description = "ARN of the landing bucket"
   type        = string
 }
 
 variable "curated_bucket_arn" {
-  description = "ARN del bucket curated"
+  description = "ARN of the curated bucket"
   type        = string
 }
 
 variable "scripts_bucket_arn" {
-  description = "ARN del bucket scripts"
+  description = "ARN of the scripts bucket"
   type        = string
 }

@@ -1,17 +1,17 @@
 variable "aws_region" {
-  description = "Región de AWS"
+  description = "AWS region"
   type        = string
   default     = "us-east-1"
 }
 
 variable "environment" {
-  description = "Ambiente de despliegue (dev)"
+  description = "Deployment environment (dev)"
   type        = string
   default     = "dev"
 }
 
 variable "project_name" {
-  description = "Nombre del proyecto"
+  description = "Project name"
   type        = string
   default     = "agro-data-pipeline"
 }

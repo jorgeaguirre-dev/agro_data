@@ -1,4 +1,4 @@
-# Rol para Glue Jobs
+# Role for Glue Jobs
 resource "aws_iam_role" "glue_role" {
   name = "${var.project_name}-${var.environment}-glue-role"
 
@@ -16,10 +16,10 @@ resource "aws_iam_role" "glue_role" {
   })
 }
 
-# Política simplificada
+# Simplified policy
 resource "aws_iam_policy" "glue_policy" {
   name        = "${var.project_name}-${var.environment}-glue-policy"
-  description = "Permisos para jobs de Glue"
+  description = "Permissions for Glue jobs"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -54,19 +54,19 @@ resource "aws_iam_policy" "glue_policy" {
   })
 }
 
-# Adjuntar política personalizada
+# Attach custom policy
 resource "aws_iam_role_policy_attachment" "glue_policy_attach" {
   role       = aws_iam_role.glue_role.name
   policy_arn = aws_iam_policy.glue_policy.arn
 }
 
-# Adjuntar política AWS administrada
+# Attach AWS managed policy
 resource "aws_iam_role_policy_attachment" "glue_service_role" {
   role       = aws_iam_role.glue_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
 }
 
-# Rol para Step Functions
+# Role for Step Functions
 resource "aws_iam_role" "step_functions_role" {
   name = "${var.project_name}-${var.environment}-stepfunctions-role"
 
@@ -84,10 +84,10 @@ resource "aws_iam_role" "step_functions_role" {
   })
 }
 
-# Política para Step Functions
+# Policy for Step Functions
 resource "aws_iam_policy" "step_functions_policy" {
   name        = "${var.project_name}-${var.environment}-stepfunctions-policy"
-  description = "Permisos para Step Functions ejecutar jobs y crawlers de Glue"
+  description = "Permissions for Step Functions to run Glue jobs and crawlers"
 
   policy = jsonencode({
     Version = "2012-10-17"

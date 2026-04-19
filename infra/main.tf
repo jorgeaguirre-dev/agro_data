@@ -12,10 +12,10 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Datos de la cuenta AWS
+# AWS account data
 data "aws_caller_identity" "current" {}
 
-# Módulo S3 (se crea primero)
+# S3 module (created first)
 module "s3" {
   source = "./modules/s3"
   
@@ -23,7 +23,7 @@ module "s3" {
   project_name = var.project_name
 }
 
-# Módulo IAM (depende explícitamente de S3)
+# IAM module (explicitly depends on S3)
 module "iam" {
   source = "./modules/iam"
   
@@ -35,10 +35,10 @@ module "iam" {
   curated_bucket_arn   = module.s3.curated_bucket_arn
   scripts_bucket_arn   = module.s3.scripts_bucket_arn
   
-  depends_on = [module.s3]  # FORZAR dependencia
+  depends_on = [module.s3]  # FORCE dependency
 }
 
-# Módulo Glue (depende de IAM y S3)
+# Glue module (depends on IAM and S3)
 module "glue" {
   source = "./modules/glue"
   

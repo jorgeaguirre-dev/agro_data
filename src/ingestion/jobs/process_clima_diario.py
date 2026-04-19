@@ -1,5 +1,5 @@
 """
-AWS Glue Job para procesar datos climáticos
+AWS Glue Job to process climate data
 """
 import sys
 from pyspark.context import SparkContext
@@ -17,70 +17,70 @@ job = Job(glueContext)
 job.init(args["JOB_NAME"], args)
 
 try:
-    print(f"📥 Leyendo clima desde: {args['input_path']}")
+    print(f"📥 Reading climate data from: {args['input_path']}")
 
-    # 1. Leer CSV
+    # 1. Read CSV
     df = spark.read.option("header", "true").csv(args["input_path"])
     total_inicial = df.count()
-    print(f"📊 Registros climáticos: {total_inicial}")
-    print(f"📋 Columnas: {df.columns}")
+    print(f"📊 Climate records: {total_inicial}")
+    print(f"📋 Columns: {df.columns}")
 
-    # 2. Validaciones inline
-    print("🔍 Validando datos climáticos...")
+    # 2. Inline validations
+    print("🔍 Validating climate data...")
 
-    # 2.1 Convertir a numérico
+    # 2.1 Cast to numeric
     df = df.withColumn("temp_num", F.col("temperatura").cast("double"))
     df = df.withColumn("precip_num", F.col("precipitacion").cast("double"))
 
-    # 2.2 Validar rangos
+    # 2.2 Validate ranges
     df = df.filter(F.col("temp_num").between(-20, 50))
     df = df.filter(F.col("precip_num").between(0, 500))
 
-    # 2.3 Eliminar nulos en columnas clave
+    # 2.3 Drop nulls in key columns
     df = df.dropna(subset=["lote_id", "fecha"])
 
-    # 2.4 Validar formato de fecha
+    # 2.4 Validate date format
     df = df.withColumn(
         "fecha_valida",
         F.when(F.col("fecha").rlike("^\\d{4}-\\d{2}-\\d{2}$"), True).otherwise(False),
     )
     df = df.filter(F.col("fecha_valida"))
 
-    # 3. Transformaciones
-    print("🔄 Aplicando transformaciones...")
+    # 3. Transformations
+    print("🔄 Applying transformations...")
 
-    # 3.1 Estandarizar nombres
+    # 3.1 Standardize column names
     for col in df.columns:
         df = df.withColumnRenamed(col, col.lower().strip().replace(" ", "_"))
 
-    # 3.2 EXTRAER campaña de la fecha (asumiendo formato YYYY-MM-DD)
+    # 3.2 EXTRACT campaign from date (assuming YYYY-MM-DD format)
     df = df.withColumn("campana", F.substring(F.col("fecha"), 1, 4))
 
-    # 3.3 CREAR columna lote a partir de lote_id
+    # 3.3 CREATE lote column from lote_id
     df = df.withColumn("lote", F.col("lote_id"))
 
-    # 3.4 Limpiar particiones
+    # 3.4 Clean partition values
     df = df.withColumn(
         "campana", F.regexp_replace(F.col("campana"), "[^a-zA-Z0-9]", "_")
     )
     df = df.withColumn("lote", F.regexp_replace(F.col("lote"), "[^a-zA-Z0-9]", "_"))
 
-    # 3.5 Limpiar columnas temporales
+    # 3.5 Drop temporary columns
     df = df.drop("temp_num", "precip_num", "fecha_valida")
 
     total_final = df.count()
-    print(f"📊 Registros después de validaciones: {total_final}")
+    print(f"📊 Records after validations: {total_final}")
     print(f"   Filtrados: {total_inicial - total_final}")
-    print(f"📋 Columnas finales: {df.columns}")
+    print(f"📋 Final columns: {df.columns}")
 
-    # 4. Escribir
-    print(f"📤 Escribiendo a: {args['output_path']}")
-    print("📂 Particionando por: campaña, lote")
+    # 4. Write
+    print(f"📤 Writing to: {args['output_path']}")
+    print("📂 Partitioning by: campaign, plot")
     df.write.mode("overwrite").partitionBy("campana", "lote").parquet(
         args["output_path"]
     )
 
-    print("✅ Job climático completado")
+    print("✅ Climate job completed")
 
 except Exception as e:
     print(f"❌ Error: {str(e)}")

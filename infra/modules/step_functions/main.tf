@@ -1,4 +1,4 @@
-# Topic SNS para alertas
+# SNS topic for alerts
 resource "aws_sns_topic" "pipeline_alerts" {
   name = "${var.project_name}-${var.environment}-pipeline-alerts"
 
@@ -8,7 +8,7 @@ resource "aws_sns_topic" "pipeline_alerts" {
   }
 }
 
-# Suscripción al topic (ejemplo con email)
+# Topic subscription (email example)
 resource "aws_sns_topic_subscription" "email_alerts" {
   count     = var.alerts_email != "" ? 1 : 0
   topic_arn = aws_sns_topic.pipeline_alerts.arn
@@ -16,7 +16,7 @@ resource "aws_sns_topic_subscription" "email_alerts" {
   endpoint  = var.alerts_email
 }
 
-# Definición de la Step Function
+# Step Function definition
 resource "aws_sfn_state_machine" "pipeline" {
   name     = "${var.project_name}-${var.environment}-pipeline"
   role_arn = var.step_functions_role_arn
@@ -38,11 +38,11 @@ resource "aws_sfn_state_machine" "pipeline" {
   }
 }
 
-# Trigger programado (diario)
+# Scheduled trigger (daily)
 resource "aws_cloudwatch_event_rule" "daily_trigger" {
   count               = var.create_schedule ? 1 : 0
   name                = "${var.project_name}-${var.environment}-daily-trigger"
-  description         = "Trigger diario para el pipeline"
+  description         = "Daily trigger for the pipeline"
   schedule_expression = var.schedule_expression
 }
 

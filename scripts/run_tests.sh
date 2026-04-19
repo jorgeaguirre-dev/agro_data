@@ -1,17 +1,17 @@
 #!/bin/bash
-# Script simple para ejecutar tests
+# Simple script to run tests
 
-echo "🧪 Ejecutando tests unitarios..."
+echo "🧪 Running unit tests..."
 echo "================================"
 
-# Ir a la raíz del repo
+# Go to repo root
 cd "$(dirname "$0")/.."
 
-# Instalar dependencias si es necesario
+# Install dependencies if needed
 # pip install -r requirements-dev.txt
 
-# Ejecutar tests
+# Run tests
 python -m pytest tests/unit -v --cov=src/ingestion/utils
 
 echo "================================"
-echo "✅ Tests completados"
+echo "✅ Tests completed"

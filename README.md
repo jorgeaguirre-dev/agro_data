@@ -14,132 +14,132 @@
 
 # Agro Data Pipeline
 
-Pipeline de datos para procesamiento de información agrícola en AWS.
->Objetivo: Ingestar un CSV "rinde_lotes.csv" y "clima_diario.csv" a un bucket S3/curated en Parquet particionado por campaña y lote. Validar: rangos de rinde, % nulos, consistencia de fechas; exponer una vista para BI (Athena).
+Data pipeline for processing agricultural information on AWS.
+>Goal: Ingest a CSV "rinde_lotes.csv" and "clima_diario.csv" into an S3/curated bucket in Parquet partitioned by campaign and plot. Validate: yield ranges, % nulls, date consistency; expose a view for BI (Athena).
 
-## 🏗️ Arquitectura
+## 🏗️ Architecture
 
 S3 Landing → Step Functions → Glue Jobs → S3 Curated → Crawlers → Glue Catalog → Athena
 ↓
 Data Quality (Great Expectations)
 ↓
-Resultados en S3 (dq_results/)
+Results in S3 (dq_results/)
 
-- **Ingesta**: CSV → S3 Landing
-- **Procesamiento**: AWS Glue (PySpark)
-- **Orquestación**: AWS Step Functions
-- **Catálogo**: AWS Glue Data Catalog
+- **Ingestion**: CSV → S3 Landing
+- **Processing**: AWS Glue (PySpark)
+- **Orchestration**: AWS Step Functions
+- **Catalog**: AWS Glue Data Catalog
 - **Data Quality**: Great Expectations
-- **Consumo**: Amazon Athena
+- **Consumption**: Amazon Athena
 
-## 📁 Estructura del Proyecto
+## 📁 Project Structure
 ```
 agro_data/
 ├── .github/workflows/ # CI/CD
 ├── infra/ # Terraform
-├── src/ # Código fuente
-│ ├── ingestion/ # Jobs de Glue
+├── src/ # Source code
+│ ├── ingestion/ # Glue Jobs
 │ └── dq/ # Data Quality
 └── orchestration/ # Step Functions
 ```
 
-## Componentes implementados
+## Implemented Components
 
-### ✅ Infraestructura (Terraform)
-- Buckets S3: landing, curated, scripts
-- Roles IAM con mínimo privilegio
-- Jobs de Glue (PySpark)
-- Crawlers para actualizar catálogo
-- Step Functions para orquestación
-- Base de datos en Glue Catalog
+### ✅ Infrastructure (Terraform)
+- S3 Buckets: landing, curated, scripts
+- IAM roles with least privilege
+- Glue Jobs (PySpark)
+- Crawlers to update catalog
+- Step Functions for orchestration
+- Database in Glue Catalog
 
-### ✅ Procesamiento (PySpark)
-- Lectura de CSVs desde landing
-- Validaciones de rango (rinde 0-20000, temp -20-50, precip 0-500)
-- Control de nulos en columnas críticas
-- Escritura en formato Parquet particionado (campaña/lote)
+### ✅ Processing (PySpark)
+- Reading CSVs from landing
+- Range validations (yield 0-20000, temp -20-50, precip 0-500)
+- Null control on critical columns
+- Writing in partitioned Parquet format (campaign/plot)
 
 ### ✅ Data Quality (Great Expectations)
-- Suite de validaciones para rinde_lotes
-- Suite de validaciones para clima_diario
-- Resultados almacenados en S3 (dq_results/)
-- Reintentos automáticos para sincronización de catálogo
+- Validation suite for rinde_lotes
+- Validation suite for clima_diario
+- Results stored in S3 (dq_results/)
+- Automatic retries for catalog synchronization
 
-### ✅ Orquestación (Step Functions)
-- Flujo secuencial: Rinde → Clima → Crawlers → DQ Rinde → DQ Clima
-- Manejo de errores y reintentos
-- Próxima mejora: Ejecución programada (CloudWatch Events)
+### ✅ Orchestration (Step Functions)
+- Sequential flow: Yield → Weather → Crawlers → DQ Yield → DQ Weather
+- Error handling and retries
+- Next improvement: Scheduled execution (CloudWatch Events)
 
-### ✅ Seguridad (IAM)
-Se proveen los archivos de configuración de perfiles apropiados para los perfiles: (carpeta iam)
-- Perfil administrador (terraform apply)
-- Perfil ingestión (solo escritura a landing)
-- Perfil BI (solo lectura a curated y Athena)
+### ✅ Security (IAM)
+Appropriate profile configuration files are provided for the following profiles: (iam folder)
+- Admin profile (terraform apply)
+- Ingestion profile (write-only to landing)
+- BI profile (read-only to curated and Athena)
 
-### ✅ Monitoreo
-Es posible monitorear mediante:
-- Logs en CloudWatch
-- Métricas de ejecución
-- Resultados DQ visibles en S3
+### ✅ Monitoring
+Monitoring is available via:
+- CloudWatch logs
+- Execution metrics
+- DQ results visible in S3
 
-## Costos estimados (mensuales)
-- S3 (50GB) almacenamiento y operaciones: $1.15
-- Glue (2 jobs x 10min/día) 2DPU: $8.40
-- Step Functions (30 ejecuciones): $1.00
-- Athena (10GB escaneados): $0.50
-- **Total: ~usd 11.40/mes**
+## Estimated Costs (monthly)
+- S3 (50GB) storage and operations: $1.15
+- Glue (2 jobs x 10min/day) 2DPU: $8.40
+- Step Functions (30 executions): $1.00
+- Athena (10GB scanned): $0.50
+- **Total: ~usd 11.40/month**
 
-### ⚡ Optimización 1: Reducción de Costos (Costo-eficiente)
-"Para escenarios de menor volumen (<1GB), podríamos reemplazar Glue Spark por Pandas en AWS Lambda"
+### ⚡ Optimization 1: Cost Reduction (Cost-efficient)
+"For lower volume scenarios (<1GB), we could replace Glue Spark with Pandas on AWS Lambda"
 
-|Cambio |	Impacto |	Ahorro |
+|Change |	Impact |	Savings |
 |-|-|-|
-|Spark (2 DPU) → Pandas (Lambda 1GB)|	+3s de latencia|	-65%
-|Glue Spark Jobs → Lambda (128MB)|	Procesamiento batch a demanda	|-$5.50/mes
-|Total optimizado| |		~$5.90/mes
+|Spark (2 DPU) → Pandas (Lambda 1GB)|	+3s latency|	-65%
+|Glue Spark Jobs → Lambda (128MB)|	On-demand batch processing	|-$5.50/month
+|Total optimized| |		~$5.90/month
 
-### ⚡ Optimización 2: Performance y Escalabilidad (Alto Rendimiento)
-Para escalar a terabytes y reducir latencia, optimizamos la configuración de Spark y el particionado
+### ⚡ Optimization 2: Performance and Scalability (High Performance)
+To scale to terabytes and reduce latency, we optimize the Spark configuration and partitioning
 
-|Cambio|	Impacto|	Costo adicional|
+|Change|	Impact|	Additional cost|
 |-|-|-|
-|Aumentar workers (2 → 5)|	-40% tiempo procesamiento|	+120%
-|Particionado por fecha+hora|	Consultas 3x más rápidas|	+15% (más archivos)
-|Usar Glue Workflows|	Pipeline optimizado|	Sin costo extra
-|Total optimizado|	60% más rápido|	+35% ($15.40/mes)|
+|Increase workers (2 → 5)|	-40% processing time|	+120%
+|Partitioning by date+hour|	3x faster queries|	+15% (more files)
+|Use Glue Workflows|	Optimized pipeline|	No extra cost
+|Total optimized|	60% faster|	+35% ($15.40/month)|
 
-## 📋 Prerrequisitos
+## 📋 Prerequisites
 
-- AWS CLI configurado
+- AWS CLI configured
 - Terraform >= 1.0
 - Python 3.9+
 
-## 🚀 Comandos para Deploy y Operaciones
+## 🚀 Deploy and Operations Commands
 
 ```bash
-# 1. Clonar repositorio
+# 1. Clone repository
 git clone agro_data
 cd agro_data
 
-# Instalar dependencias
+# Install dependencies
 pip install -r requirements-dev.txt
 
-# Desplegar infraestructura
+# Deploy infrastructure
 cd infra && terraform apply
 
-# Subir scripts necesarios para el funcionamiento
+# Upload scripts required for operation
 ./scripts/upload_scripts.sh
 
-# Subir datos de ejemplo de la carpeta /data
+# Upload sample data from /data folder
 ./scripts/upload_data.sh
 ```
-![Data Subida](img/data_subida.png)
+![Data Uploaded](img/data_subida.png)
 
 ```bash
-# Ejecutar pipeline (luego de que la infra está lista)
+# Run pipeline (after infrastructure is ready)
 ./scripts/run_step_function.sh
 
-# Ver resultados DQ
+# View DQ results
 aws s3 ls s3://agro-data-pipeline-dev-curated/dq_results/ --recursive
 ```
 
@@ -148,17 +148,17 @@ aws s3 ls s3://agro-data-pipeline-dev-curated/dq_results/ --recursive
 ![Parquet Data](img/parquet_data.png)
 
 ```bash
-# Consultar en Athena (en su consola de queries)
+# Query in Athena (in your query console)
 SELECT * FROM 'agro-data-pipeline_dev_db'.'rinde_lotes' LIMIT 10;
 
-# Realizar una consulta SQL desde la cli de aws
+# Run a SQL query from the AWS CLI
 aws athena start-query-execution \
   --query-string "SELECT * FROM 'agro-data-pipeline_dev_db'.'rinde_lotes' LIMIT 10;" \
   --result-configuration "OutputLocation=s3://agro-data-pipeline-dev-curated/athena-results/" \
   --output text \
   --query 'QueryExecutionId'
 
-# Ver archivos Parquet generados
+# View generated Parquet files
 aws s3 ls s3://agro-data-pipeline-dev-curated/rinde_lotes/ --recursive
 aws s3 ls s3://agro-data-pipeline-dev-curated/clima_diario/ --recursive
 ```
@@ -166,28 +166,28 @@ aws s3 ls s3://agro-data-pipeline-dev-curated/clima_diario/ --recursive
 ## DAG
 ![Pipeline DAG](./img/DAG.png)
 
-![Jobs de Glue](img/jobs_Glue.png)
+![Glue Jobs](img/jobs_Glue.png)
 
-## Idempotencia en los jobs de Glue:
-Los jobs son idempotentes porque:
-- Sobrescriben particiones con mode("overwrite")
-- Procesan archivo por archivo con timestamp en nombre
-- Si el mismo archivo se procesa dos veces → mismo resultado
+## Idempotency in Glue jobs:
+Jobs are idempotent because:
+- They overwrite partitions with mode("overwrite")
+- They process file by file with timestamp in the name
+- If the same file is processed twice → same result
 
 ## ✅ Data Quality
 
-Great Expectations valida:
-- No nulos en columnas críticas
-- Rangos de rinde (0-20000)
-- Rangos climáticos (temp -20/50, precip 0-500)
-- Formato de fechas YYYY-MM-DD
+Great Expectations validates:
+- No nulls in critical columns
+- Yield ranges (0-20000)
+- Climate ranges (temp -20/50, precip 0-500)
+- Date format YYYY-MM-DD
 
 
-## 📊 BI y Visualización
+## 📊 BI and Visualization
 
-- **Athena**: Consultas SQL directas
+- **Athena**: Direct SQL queries
 
-![Consulta Athena](img/consultas_athena.png)
+![Athena Query](img/consultas_athena.png)
 
 ## 🧪 Tests
 
