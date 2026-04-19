@@ -1,8 +1,8 @@
 {
-  "Comment": "Pipeline de datos agrícolas con Data Quality",
-  "StartAt": "ProcesarRinde",
+  "Comment": "Agricultural data pipeline with Data Quality",
+  "StartAt": "YieldProcess",
   "States": {
-    "ProcesarRinde": {
+    "YieldProcess": {
       "Type": "Task",
       "Resource": "arn:aws:states:::glue:startJobRun.sync",
       "Parameters": {
@@ -12,9 +12,9 @@
           "--output_path": "s3://${CURATED_BUCKET}/rinde_lotes"
         }
       },
-      "Next": "ProcesarClima"
+      "Next": "WeatherProcess"
     },
-    "ProcesarClima": {
+    "WeatherProcess": {
       "Type": "Task",
       "Resource": "arn:aws:states:::glue:startJobRun.sync",
       "Parameters": {
@@ -30,9 +30,9 @@
       "Type": "Parallel",
       "Branches": [
         {
-          "StartAt": "CrawlerRinde",
+          "StartAt": "YieldCrawler",
           "States": {
-            "CrawlerRinde": {
+            "YieldCrawler": {
               "Type": "Task",
               "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
               "Parameters": {
@@ -43,9 +43,9 @@
           }
         },
         {
-          "StartAt": "CrawlerClima",
+          "StartAt": "WeatherCrawler",
           "States": {
-            "CrawlerClima": {
+            "WeatherCrawler": {
               "Type": "Task",
               "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
               "Parameters": {
@@ -56,9 +56,9 @@
           }
         }
       ],
-      "Next": "DataQualityRinde"
+      "Next": "DataQualityYield"
     },
-    "DataQualityRinde": {
+    "DataQualityYield": {
       "Type": "Task",
       "Resource": "arn:aws:states:::glue:startJobRun.sync",
       "Parameters": {
@@ -70,9 +70,9 @@
           "--results_bucket": "${CURATED_BUCKET}"
         }
       },
-      "Next": "DataQualityClima"
+      "Next": "DataQualityWeather"
     },
-    "DataQualityClima": {
+    "DataQualityWeather": {
       "Type": "Task",
       "Resource": "arn:aws:states:::glue:startJobRun.sync",
       "Parameters": {
