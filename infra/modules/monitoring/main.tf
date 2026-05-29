@@ -70,7 +70,7 @@ resource "aws_cloudwatch_metric_alarm" "high_null_rate" {
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name        = "NullPercentage"
-  namespace          = "Bayer/DataQuality"
+  namespace          = "Agro/DataQuality"
   period             = 300
   statistic          = "Average"
   threshold          = 5.0  # 5% null rate

@@ -50,7 +50,6 @@ module "glue" {
   depends_on = [module.iam, module.s3]
 }
 
-
 # Step Function
 resource "aws_sfn_state_machine" "pipeline" {
   name     = "${var.project_name}-${var.environment}-pipeline"
@@ -64,30 +63,4 @@ resource "aws_sfn_state_machine" "pipeline" {
     CURATED_BUCKET  = module.s3.curated_bucket_id
     DATABASE_NAME   = module.glue.database_name
   })
-}
-
-
-# Outputs
-output "landing_bucket" {
-  value = module.s3.landing_bucket_id
-}
-
-output "curated_bucket" {
-  value = module.s3.curated_bucket_id
-}
-
-output "scripts_bucket" {
-  value = module.s3.scripts_bucket_id
-}
-
-output "glue_jobs" {
-  value = module.glue.job_names
-}
-
-output "glue_database" {
-  value = module.glue.database_name
-}
-
-output "step_function_arn" {
-  value = aws_sfn_state_machine.pipeline.arn
 }

@@ -81,9 +81,8 @@ try:
     )
 
     print("✅ Climate job completed")
-
+    job.commit()
+    
 except Exception as e:
     print(f"❌ Error: {str(e)}")
     raise
-finally:
-    job.commit()
