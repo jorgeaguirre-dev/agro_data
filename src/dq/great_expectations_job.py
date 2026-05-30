@@ -1,6 +1,6 @@
 """
-Glue Job to run Great Expectations validations
-With forced catalog synchronization
+Glue Job para validaciones de Data Quality con Great Expectations
+Versión refactorizada - limpia y mantenible
 """
 import sys
 import json
@@ -11,261 +11,192 @@ from awsglue.context import GlueContext
 from awsglue.job import Job
 from awsglue.utils import getResolvedOptions
 
-# Inicialización
-args = getResolvedOptions(
-    sys.argv,
-    ["JOB_NAME", "suite_name", "database_name", "table_name", "results_bucket"],
-)
-sc = SparkContext()
-glueContext = GlueContext(sc)
-spark = glueContext.spark_session
-job = Job(glueContext)
-job.init(args["JOB_NAME"], args)
+# Constantes de configuración
+CLOUD_REGION = 'us-east-1'
 
-
-def force_catalog_sync(spark, database, table, max_attempts=10, delay=5):
-    """Forces catalog synchronization and retries until the table is available"""
-
-    print("🔄 Forcing catalog synchronization...")
-
-    # Option 1: Refresh the table if it exists
-    try:
-        spark.sql(f"REFRESH TABLE `{database}`.`{table}`")
-        print(f"✅ Table {database}.{table} refreshed")
-    except Exception:
-        print("⚠️ Could not refresh (table may not exist yet)")
-
-    # Option 2: List available tables in Spark
-    for attempt in range(max_attempts):
-        try:
-            print(
-                f"🔍 Attempt {attempt + 1}/{max_attempts} - Checking tables in Spark..."
-            )
-
-            # List databases in Spark
-            spark.sql("SHOW DATABASES").show(truncate=False)
-
-            # Try to use the database
-            spark.sql(f"USE `{database}`")
-
-            # List tables in this database
-            tables_df = spark.sql("SHOW TABLES")
-            print("📋 Available tables in Spark:")
-            tables_df.show(truncate=False)
-
-            # Check if our table is in the list
-            tables_list = [row["tableName"] for row in tables_df.collect()]
-
-            if table in tables_list:
-                print(f"✅ Table {table} found in Spark!")
-
-                # Try to count records
-                count_df = spark.sql(f"SELECT COUNT(*) FROM `{database}`.`{table}`")
-                count = count_df.collect()[0][0]
-                print(f"📊 Records found: {count}")
-                return True
-            else:
-                print(
-                    f"⏳ Table {table} NOT found in Spark. Available tables: {tables_list}"
-                )
-
-        except Exception as e:
-            print(f"⏳ Error on attempt {attempt + 1}: {str(e)[:100]}")
-
-        if attempt < max_attempts - 1:
-            print(f"   Waiting {delay} seconds...")
-            time.sleep(delay)
-
-    return False
-
-
-try:
-    print("=" * 50)
-    print("🚀 STARTING DATA QUALITY JOB")
-    print("=" * 50)
-    print("📋 Configuration:")
-    print(f"   - Database: {args['database_name']}")
-    print(f"   - Table: {args['table_name']}")
-    print(f"   - Suite: {args['suite_name']}")
-    print(f"   - Results bucket: {args['results_bucket']}")
-
-    # Option 3: Use Glue Client directly for debug
-    glue_client = boto3.client("glue", region_name="us-east-1")
-    try:
-        tables_response = glue_client.get_tables(DatabaseName=args["database_name"])
-        print(
-            f"📋 Tables in Glue Catalog: {[t['Name'] for t in tables_response['TableList']]}"
-        )
-    except Exception as e:
-        print(f"⚠️ Error getting tables from Glue: {e}")
-
-    # WAIT until the table is available in Spark
-    if not force_catalog_sync(spark, args["database_name"], args["table_name"]):
-        # Last resort: try with the S3 path directly
-        print("⚠️ Trying to access via S3 path as fallback...")
-        s3_path = f"s3://{args['results_bucket'].replace('-curated', '')}/{args['table_name']}"
-
-        # Determine the correct path
-        if "rinde" in args["table_name"]:
-            s3_path = "s3://agro-data-pipeline-dev-curated/rinde_lotes"
-        else:
-            s3_path = "s3://agro-data-pipeline-dev-curated/clima_diario"
-
-        print(f"📂 Reading directly from: {s3_path}")
-
-        try:
-            df = spark.read.parquet(s3_path)
-            total_rows = df.count()
-            print(f"✅ Direct read successful! {total_rows} records")
-
-            # Create temporary view to use SQL
-            df.createOrReplaceTempView(args["table_name"])
-
-        except Exception as e2:
-            raise Exception(
-                f"Could not access data via catalog or S3: {e2}"
-            )
-    else:
-        # Read the table normally
-        df = spark.sql(
-            f"SELECT * FROM `{args['database_name']}`.`{args['table_name']}`"
-        )
-        total_rows = df.count()
-
-    print(f"📊 Total records: {total_rows}")
-
-    if total_rows == 0:
-        print("⚠️ Empty table - validations cannot be performed")
-        results = {
-            "suite_name": args["suite_name"],
-            "table": args["table_name"],
-            "database": args["database_name"],
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "total_rows": 0,
-            "status": "EMPTY_TABLE",
-            "validations": [],
-        }
-    else:
-        # Show schema and data
-        print("📋 Schema:")
-        df.printSchema()
-        print("📋 First 3 rows:")
-        df.show(3, truncate=False)
-
-        # Validations
-        results = {
-            "suite_name": args["suite_name"],
-            "table": args["table_name"],
-            "database": args["database_name"],
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "total_rows": total_rows,
-            "validations": [],
-        }
-
-        # Available columns
-        columns = df.columns
-        print(f"📋 Available columns: {columns}")
-
-        # Validation 1: No nulls in lote_id (if exists)
-        if "lote_id" in columns:
-            null_count = df.filter("`lote_id` IS NULL").count()
-            results["validations"].append(
-                {
-                    "expectation": "not_null_lote_id",
-                    "column": "lote_id",
-                    "success": null_count == 0,
+class DataQualityValidator:
+    """Validador de calidad de datos para tablas agrícolas"""
+    
+    def __init__(self, spark, database_name, table_name, results_bucket, suite_name):
+        self.spark = spark
+        self.database_name = database_name
+        self.table_name = table_name
+        self.results_bucket = results_bucket
+        self.suite_name = suite_name
+        self.glue_client = boto3.client('glue', region_name=CLOUD_REGION)
+    
+    def wait_for_table(self, max_attempts=12, delay=10):
+        """Espera a que la tabla esté disponible en Glue Catalog"""
+        for attempt in range(max_attempts):
+            try:
+                tables = self.glue_client.get_tables(DatabaseName=self.database_name)
+                table_names = [t['Name'] for t in tables['TableList']]
+                
+                if self.table_name in table_names:
+                    print(f"✅ Tabla {self.table_name} encontrada")
+                    return True
+                    
+                print(f"⏳ Intento {attempt + 1}/{max_attempts}: tabla no disponible")
+                
+            except Exception as e:
+                print(f"⚠️ Error verificando: {str(e)[:100]}")
+            
+            if attempt < max_attempts - 1:
+                time.sleep(delay)
+        
+        raise Exception(f"Tabla {self.database_name}.{self.table_name} no disponible")
+    
+    def load_data(self):
+        """Carga los datos desde Glue Catalog"""
+        query = f"SELECT * FROM `{self.database_name}`.`{self.table_name}`"
+        print(f"📊 Ejecutando: {query}")
+        return self.spark.sql(query)
+    
+    def validate_not_null(self, df, columns):
+        """Valida que las columnas críticas no tengan nulos"""
+        results = []
+        for column in columns:
+            if column in df.columns:
+                null_count = df.filter(f"`{column}` IS NULL").count()
+                total_rows = df.count()
+                success = null_count == 0
+                results.append({
+                    "expectation": f"not_null_{column}",
+                    "column": column,
+                    "success": success,
                     "null_count": null_count,
-                    "null_percentage": round(null_count / total_rows * 100, 2),
-                }
-            )
-            print(f"   lote_id nulls: {null_count}")
+                    "null_percentage": round(null_count/total_rows*100, 2) if total_rows > 0 else 0
+                })
+        return results
+    
+    def validate_ranges(self, df):
+        """Valida rangos según el tipo de tabla"""
+        results = []
+        
+        if 'rinde' in self.table_name:
+            if 'rinde' in df.columns:
+                out_of_range = df.filter("CAST(`rinde` AS double) < 0 OR CAST(`rinde` AS double) > 20000").count()
+                results.append({
+                    "expectation": "range_rinde_0_20000",
+                    "column": "rinde",
+                    "success": out_of_range == 0,
+                    "out_of_range": out_of_range
+                })
+        else:
+            if 'temperatura' in df.columns:
+                temp_out = df.filter("CAST(`temperatura` AS double) < -20 OR CAST(`temperatura` AS double) > 50").count()
+                results.append({
+                    "expectation": "range_temperatura_-20_50",
+                    "column": "temperatura",
+                    "success": temp_out == 0,
+                    "out_of_range": temp_out
+                })
+            
+            if 'precipitacion' in df.columns:
+                precip_out = df.filter("CAST(`precipitacion` AS double) < 0 OR CAST(`precipitacion` AS double) > 500").count()
+                results.append({
+                    "expectation": "range_precipitacion_0_500",
+                    "column": "precipitacion",
+                    "success": precip_out == 0,
+                    "out_of_range": precip_out
+                })
+        
+        return results
+    
+    def save_results(self, results, total_rows):
+        """Guarda los resultados en S3"""
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        key = f"dq_results/{self.table_name}_{self.suite_name}_{timestamp}.json"
+        
+        s3 = boto3.client('s3')
+        s3.put_object(
+            Bucket=self.results_bucket,
+            Key=key,
+            Body=json.dumps({
+                "suite_name": self.suite_name,
+                "table": self.table_name,
+                "database": self.database_name,
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "total_rows": total_rows,
+                "validations": results
+            }, indent=2, default=str)
+        )
+        
+        print(f"📈 Resultados guardados en s3://{self.results_bucket}/{key}")
+        return key
+    
+    def run(self):
+        """Ejecuta todas las validaciones"""
+        print("=" * 50)
+        print("🚀 INICIANDO DATA QUALITY JOB")
+        print("=" * 50)
+        
+        # 1. Esperar tabla
+        self.wait_for_table()
+        
+        # 2. Cargar datos
+        df = self.load_data()
+        total_rows = df.count()
+        print(f"📊 Registros a validar: {total_rows}")
+        
+        if total_rows == 0:
+            print("⚠️ Tabla vacía")
+            self.save_results([], 0)
+            return
+        
+        # 3. Ejecutar validaciones
+        print("🔍 Ejecutando validaciones...")
+        
+        # Validaciones de nulos
+        critical_columns = ['lote_id', 'campana'] if 'rinde' in self.table_name else ['lote_id', 'fecha']
+        validation_results = self.validate_not_null(df, critical_columns)
+        
+        # Validaciones de rangos
+        validation_results.extend(self.validate_ranges(df))
+        
+        # 4. Guardar resultados
+        self.save_results(validation_results, total_rows)
+        
+        # 5. Evaluar éxito
+        all_passed = all(v.get('success', False) for v in validation_results)
+        print(f"✅ Todas las validaciones exitosas: {all_passed}")
+        
+        if not all_passed:
+            raise Exception("Algunas validaciones de calidad fallaron")
 
-        # Table-specific validations
-        if "rinde" in args["table_name"]:
-            if "rinde" in columns:
-                out_of_range = df.filter(
-                    "CAST(`rinde` AS double) < 0 OR CAST(`rinde` AS double) > 20000"
-                ).count()
-                results["validations"].append(
-                    {
-                        "expectation": "range_rinde_0_20000",
-                        "column": "rinde",
-                        "success": out_of_range == 0,
-                        "out_of_range": out_of_range,
-                    }
-                )
-                print(f"   rinde out of range: {out_of_range}")
 
-            if "campana" in columns:
-                null_campana = df.filter("`campana` IS NULL").count()
-                results["validations"].append(
-                    {
-                        "expectation": "not_null_campana",
-                        "column": "campana",
-                        "success": null_campana == 0,
-                        "null_count": null_campana,
-                    }
-                )
+def main():
+    """Función principal del job"""
+    # Inicialización
+    args = getResolvedOptions(sys.argv, [
+        'JOB_NAME', 'suite_name', 'database_name', 'table_name', 'results_bucket'
+    ])
+    
+    sc = SparkContext()
+    glueContext = GlueContext(sc)
+    spark = glueContext.spark_session
+    job = Job(glueContext)
+    job.init(args['JOB_NAME'], args)
+    
+    try:
+        # Configurar y ejecutar validador
+        validator = DataQualityValidator(
+            spark=spark,
+            database_name=args['database_name'],
+            table_name=args['table_name'],
+            results_bucket=args['results_bucket'],
+            suite_name=args['suite_name']
+        )
+        
+        validator.run()
+        
+        # Marcar job como exitoso
+        job.commit()
+        
+    except Exception as e:
+        print(f"❌ Error fatal: {str(e)}")
+        raise  # Glue lo marcará como fallido
 
-        elif "clima" in args["table_name"]:
-            if "temperatura" in columns:
-                temp_out = df.filter(
-                    "CAST(`temperatura` AS double) < -20 OR CAST(`temperatura` AS double) > 50"
-                ).count()
-                results["validations"].append(
-                    {
-                        "expectation": "range_temperatura_-20_50",
-                        "column": "temperatura",
-                        "success": temp_out == 0,
-                        "out_of_range": temp_out,
-                    }
-                )
-                print(f"   temperatura out of range: {temp_out}")
 
-            if "precipitacion" in columns:
-                precip_out = df.filter(
-                    "CAST(`precipitacion` AS double) < 0 OR CAST(`precipitacion` AS double) > 500"
-                ).count()
-                results["validations"].append(
-                    {
-                        "expectation": "range_precipitacion_0_500",
-                        "column": "precipitacion",
-                        "success": precip_out == 0,
-                        "out_of_range": precip_out,
-                    }
-                )
-                print(f"   precipitacion out of range: {precip_out}")
-
-    # Save results
-    s3 = boto3.client("s3")
-    key = f"dq_results/{args['table_name']}_{args['suite_name']}_{time.strftime('%Y%m%d_%H%M%S')}.json"
-
-    s3.put_object(
-        Bucket=args["results_bucket"],
-        Key=key,
-        Body=json.dumps(results, indent=2, default=str),
-    )
-
-    print(f"📈 Results saved to s3://{args['results_bucket']}/{key}")
-
-    if total_rows > 0:
-        all_success = all(v.get("success", False) for v in results["validations"])
-        print(f"✅ Successful validations: {all_success}")
-
-        if not all_success:
-            print("⚠️ Some validations failed - check results")
-    else:
-        print("⚠️ Empty table - validations not applied")
-
-    print("=" * 50)
-    print("✅ JOB COMPLETED")
-    print("=" * 50)
-
-except Exception as e:
-    print(f"❌ Fatal error: {str(e)}")
-    import traceback
-
-    traceback.print_exc()
-    raise
-finally:
-    job.commit()
+if __name__ == "__main__":
+    main()
