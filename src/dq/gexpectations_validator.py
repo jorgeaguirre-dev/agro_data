@@ -19,6 +19,8 @@ from awsglue.context import GlueContext
 from awsglue.job import Job
 from awsglue.utils import getResolvedOptions
 
+# Constantes de configuración
+CLOUD_REGION = 'us-east-1'
 
 class GExpectationsValidator:
     """Validador de calidad usando Great Expectations"""
@@ -29,8 +31,8 @@ class GExpectationsValidator:
         self.table_name = table_name
         self.results_bucket = results_bucket
         self.suite_name = suite_name
-        self.glue_client = boto3.client('glue', region_name='us-east-1')
-    
+        self.glue_client = boto3.client('glue', region_name=CLOUD_REGION)
+
     def wait_for_table(self, max_attempts=12, delay=10):
         """Espera a que la tabla esté disponible"""
         for attempt in range(max_attempts):
@@ -133,7 +135,7 @@ class GExpectationsValidator:
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         key = f"dq_results/ge_{self.table_name}_{self.suite_name}_{timestamp}.json"
         
-        s3 = boto3.client('s3')
+        s3 = boto3.client('s3', region_name=CLOUD_REGION)
         s3.put_object(
             Bucket=self.results_bucket,
             Key=key,
