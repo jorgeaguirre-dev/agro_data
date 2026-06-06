@@ -1,6 +1,13 @@
 """
-Glue Job para validaciones de Data Quality con Great Expectations
-Versión refactorizada - limpia y mantenible
+Data Quality Validator - Implementación nativa en PySpark
+⚠️ NOTA: Este validador NO está activo en el pipeline actual.
+         Se mantiene como referencia y ejemplo de validaciones manuales.
+         El validador activo es great_expectations_validator.py
+
+Validaciones implementadas:
+- Not null en columnas críticas
+- Rangos numéricos (rinde, temperatura, precipitación)
+- Formato de fechas (YYYY-MM-DD)
 """
 import sys
 import json
