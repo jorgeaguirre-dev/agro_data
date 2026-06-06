@@ -55,7 +55,7 @@ resource "aws_glue_job" "great_expectations" {
   role_arn = var.glue_role_arn
 
   command {
-    script_location = "s3://${var.scripts_bucket_id}/jobs/great_expectations_job.py"
+    script_location = "s3://${var.scripts_bucket_id}/jobs/gexpectations_validator.py"
     python_version  = "3"
   }
 
