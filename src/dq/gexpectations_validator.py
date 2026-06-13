@@ -6,7 +6,7 @@ Implementa Great Expectations para validaciones más robustas y reportables
 """
 
 # Instalar GE en el job de Glue
-!pip install great_expectations
+#!pip install great_expectations
 
 import sys
 import json
