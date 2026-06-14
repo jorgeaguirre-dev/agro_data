@@ -7,29 +7,28 @@
 ![S3](https://img.shields.io/badge/S3-Storage-orange?logo=amazon-s3&logoColor=white)
 ![Parquet](https://img.shields.io/badge/Parquet-Columnar-red?logo=apacheparquet&logoColor=white)
 ![Spark](https://img.shields.io/badge/Spark-PySpark-green?logo=apachespark&logoColor=white)
-![Great Expectations](https://img.shields.io/badge/Great%20Expectations-Data%20Quality-purple?logo=great-expectations&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-14%20passed-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)
-![CI Pipeline](https://github.com/jorgeaguirre-dev/agro-data/actions/workflows/ci.yml/badge.svg)
-
+![CI Status](https://github.com/jorgeaguirre-dev/agro-data/actions/workflows/ci.yml/badge.svg)
 # Agro Data Pipeline
 
 Data pipeline for processing agricultural information on AWS.
 >Goal: Ingest a CSV "rinde_lotes.csv" and "clima_diario.csv" into an S3/curated bucket in Parquet partitioned by campaign and plot. Validate: yield ranges, % nulls, date consistency; expose a view for BI (Athena).
 
 ## 🏗️ Architecture
-
+```
 S3 Landing → Step Functions → Glue Jobs → S3 Curated → Crawlers → Glue Catalog → Athena
 ↓
-Data Quality (Great Expectations)
+Data Quality
 ↓
 Results in S3 (dq_results/)
+```
 
 - **Ingestion**: CSV → S3 Landing
 - **Processing**: AWS Glue (PySpark)
 - **Orchestration**: AWS Step Functions
 - **Catalog**: AWS Glue Data Catalog
-- **Data Quality**: Great Expectations
+- **Data Quality**: Checks
 - **Consumption**: Amazon Athena
 
 ## Implemented Components
@@ -48,7 +47,7 @@ Results in S3 (dq_results/)
 - Null control on critical columns
 - Writing in partitioned Parquet format (campaign/plot)
 
-### ✅ Data Quality (Great Expectations)
+### ✅ Data Quality
 - Validation suite for rinde_lotes
 - Validation suite for clima_diario
 - Results stored in S3 (dq_results/)
@@ -118,7 +117,7 @@ Jobs are idempotent because:
 
 ## ✅ Data Quality
 
-Great Expectations validates:
+Validations:
 - No nulls in critical columns
 - Yield ranges (0-20000)
 - Climate ranges (temp -20/50, precip 0-500)
