@@ -10,6 +10,8 @@
 ![Tests](https://img.shields.io/badge/tests-14%20passed-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)
 ![CI Pipeline](https://github.com/jorgeaguirre-dev/agro-data/actions/workflows/ci.yml/badge.svg?nocache=1)
+![CI Pipeline](https://img.shields.io/github/actions/workflow/status/jorgeaguirre-dev/agro-data/ci.yml?branch=main&label=CI%20Pipeline)
+
 # Agro Data Pipeline
 
 Data pipeline for processing agricultural information on AWS.
