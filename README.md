@@ -32,17 +32,6 @@ Results in S3 (dq_results/)
 - **Data Quality**: Great Expectations
 - **Consumption**: Amazon Athena
 
-## 📁 Project Structure
-```
-agro_data/
-├── .github/workflows/ # CI/CD
-├── infra/ # Terraform
-├── src/ # Source code
-│ ├── ingestion/ # Glue Jobs
-│ └── dq/ # Data Quality
-└── orchestration/ # Step Functions
-```
-
 ## Implemented Components
 
 ### ✅ Infrastructure (Terraform)
@@ -108,60 +97,13 @@ To scale to terabytes and reduce latency, we optimize the Spark configuration an
 |Use Glue Workflows|	Optimized pipeline|	No extra cost
 |Total optimized|	60% faster|	+35% ($15.40/month)|
 
-## 📋 Prerequisites
-
-- AWS CLI configured
-- Terraform >= 1.0
-- Python 3.9+
-
 ## 🚀 Deploy and Operations Commands
 
-```bash
-# 1. Clone repository
-git clone agro_data
-cd agro_data
-
-# Install dependencies
-pip install -r requirements-dev.txt
-
-# Deploy infrastructure
-cd infra && terraform apply
-
-# Upload scripts required for operation
-./scripts/upload_scripts.sh
-
-# Upload sample data from /data folder
-./scripts/upload_data.sh
-```
 ![Data Uploaded](img/data_subida.png)
-
-```bash
-# Run pipeline (after infrastructure is ready)
-./scripts/run_step_function.sh
-
-# View DQ results
-aws s3 ls s3://agro-data-pipeline-dev-curated/dq_results/ --recursive
-```
 
 ![Curated Bucket](img/curated_bucket.png)
 
 ![Parquet Data](img/parquet_data.png)
-
-```bash
-# Query in Athena (in your query console)
-SELECT * FROM 'agro-data-pipeline_dev_db'.'rinde_lotes' LIMIT 10;
-
-# Run a SQL query from the AWS CLI
-aws athena start-query-execution \
-  --query-string "SELECT * FROM 'agro-data-pipeline_dev_db'.'rinde_lotes' LIMIT 10;" \
-  --result-configuration "OutputLocation=s3://agro-data-pipeline-dev-curated/athena-results/" \
-  --output text \
-  --query 'QueryExecutionId'
-
-# View generated Parquet files
-aws s3 ls s3://agro-data-pipeline-dev-curated/rinde_lotes/ --recursive
-aws s3 ls s3://agro-data-pipeline-dev-curated/clima_diario/ --recursive
-```
 
 ## DAG
 ![Pipeline DAG](./img/DAG.png)
