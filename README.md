@@ -9,7 +9,7 @@
 ![Spark](https://img.shields.io/badge/Spark-PySpark-green?logo=apachespark&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-14%20passed-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)
-![CI Status](https://github.com/jorgeaguirre-dev/agro-data/actions/workflows/CI%20Pipeline/badge.svg)
+![CI Pipeline](https://github.com/jorgeaguirre-dev/agro-data/actions/workflows/ci.yml/badge.svg?nocache=1)
 # Agro Data Pipeline
 
 Data pipeline for processing agricultural information on AWS.
